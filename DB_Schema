@@ -1,0 +1,151 @@
+# NOCTAEL E-COMMERCE DATABASE HIERARCHY
+
+## 📊 DATABASE STRUCTURE OVERVIEW
+
+\`\`\`
+NOCTAEL_ECOMMERCE_DB
+│
+├── 👥 USER MANAGEMENT
+│   ├── users (Core user data)
+│   ├── user_sessions (Authentication sessions)
+│   ├── password_reset_tokens (Password recovery)
+│   └── email_verification_tokens (Email verification)
+│
+├── 🛍️ PRODUCT CATALOG
+│   ├── categories (Product categories - hierarchical)
+│   ├── brands (Product brands)
+│   ├── products (Main product information)
+│   ├── product_images (Product photos)
+│   ├── product_variants (Size, color variations)
+│   ├── variant_options (Variant attributes)
+│   ├── product_tags (Product tags)
+│   └── product_tag_relations (Many-to-many: products ↔ tags)
+│
+├── 📦 INVENTORY MANAGEMENT
+│   └── inventory_transactions (Stock movement tracking)
+│
+├── 👤 CUSTOMER DATA
+│   ├── addresses (Shipping/billing addresses)
+│   ├── wishlists (Customer wishlists)
+│   └── wishlist_items (Items in wishlists)
+│
+├── 🛒 SHOPPING CART
+│   ├── carts (Shopping cart sessions)
+│   └── cart_items (Items in cart)
+│
+├── 📋 ORDER MANAGEMENT
+│   ├── orders (Order information)
+│   ├── order_items (Products in orders)
+│   └── order_status_history (Order status tracking)
+│
+├── 💳 PAYMENT PROCESSING
+│   ├── payment_methods (Available payment options)
+│   └── payment_transactions (Payment records)
+│
+├── 🚚 SHIPPING & FULFILLMENT
+│   ├── shipping_methods (Shipping options)
+│   ├── shipments (Shipment tracking)
+│   └── shipment_items (Items in shipments)
+│
+├── 🎫 DISCOUNTS & PROMOTIONS
+│   ├── discount_codes (Coupons/promo codes)
+│   └── discount_code_usage (Usage tracking)
+│
+├── ⭐ REVIEWS & RATINGS
+│   ├── product_reviews (Customer reviews)
+│   └── review_votes (Review helpfulness votes)
+│
+├── 🔔 NOTIFICATIONS
+│   ├── notification_templates (Email/SMS templates)
+│   └── user_notifications (User notification queue)
+│
+├── 📈 ANALYTICS & TRACKING
+│   ├── page_views (Website analytics)
+│   ├── product_views (Product view tracking)
+│   └── search_queries (Search analytics)
+│
+└── ⚙️ SYSTEM MANAGEMENT
+    ├── system_settings (Application configuration)
+    └── activity_logs (System activity tracking)
+\`\`\`
+
+## 🔗 KEY RELATIONSHIPS
+
+### Primary Relationships:
+- **users** → orders (1:many)
+- **users** → carts (1:many)
+- **users** → addresses (1:many)
+- **users** → wishlists (1:many)
+- **users** → product_reviews (1:many)
+
+### Product Relationships:
+- **categories** → products (1:many)
+- **brands** → products (1:many)
+- **products** → product_images (1:many)
+- **products** → product_variants (1:many)
+- **products** → cart_items (1:many)
+- **products** → order_items (1:many)
+
+### Order Flow:
+- **carts** → orders (conversion)
+- **orders** → order_items (1:many)
+- **orders** → payment_transactions (1:many)
+- **orders** → shipments (1:many)
+
+## 📋 TABLE DETAILS
+
+### Core Tables (High Priority):
+1. **users** - 15 fields, authentication & profile
+2. **products** - 25+ fields, complete product data
+3. **orders** - 40+ fields, comprehensive order info
+4. **categories** - Hierarchical structure with parent_id
+
+### Supporting Tables:
+- **product_variants** - Handle size/color variations
+- **inventory_transactions** - Track all stock movements
+- **payment_transactions** - Payment processing records
+- **order_status_history** - Audit trail for orders
+
+### Analytics Tables:
+- **page_views** - Website traffic analysis
+- **product_views** - Product popularity tracking
+- **search_queries** - Search behavior analysis
+
+## 🔍 INDEXES & PERFORMANCE
+
+### Critical Indexes:
+- users(email) - Login performance
+- products(sku, slug) - Product lookups
+- orders(order_number, user_id) - Order queries
+- product_reviews(product_id) - Review display
+
+### Composite Indexes:
+- orders(user_id, status) - User order filtering
+- products(category_id, is_active) - Category browsing
+- cart_items(cart_id, product_id) - Cart operations
+
+## 🛡️ DATA INTEGRITY
+
+### Foreign Key Constraints:
+- CASCADE deletes for dependent data
+- RESTRICT deletes for referenced data
+- SET NULL for optional references
+
+### Data Validation:
+- Email uniqueness constraints
+- SKU uniqueness for products
+- Rating bounds (1-5 stars)
+- Enum constraints for status fields
+
+## 📊 ESTIMATED DATA VOLUMES
+
+### Production Scale:
+- **users**: 10K-100K records
+- **products**: 1K-10K records
+- **orders**: 50K-500K records
+- **page_views**: 1M+ records (archived regularly)
+
+### Storage Considerations:
+- Product images stored as URLs (external storage)
+- Large text fields for descriptions
+- JSON fields for flexible data storage
