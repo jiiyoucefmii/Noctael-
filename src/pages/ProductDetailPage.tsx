@@ -4,15 +4,9 @@ import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { ChevronRight, Home } from "lucide-react"
 
-<<<<<<< HEAD
 import { getProductById } from "../../lib/products"
 import ProductDetails from "../../components/product-details"
 import type { Product } from "../../types/product"
-=======
-import { getProductById } from "../lib/products"
-import ProductDetails from "../components/product-details"
-import type { Product } from "../types/product"
->>>>>>> master
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()

@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import "./App.css"
 
-import { CartProvider } from "./providers/cart-provider"
-import { Toaster } from "./components/ui/toaster"
-import Header from "./components/header"
-import Footer from "./components/footer"
+import { CartProvider } from "../providers/cart-provider"
+import { Toaster } from "../components/ui/toaster"
+import Header from "../components/header"
+import Footer from "../components/footer"
 
 // Pages
 import HomePage from "./pages/HomePage"

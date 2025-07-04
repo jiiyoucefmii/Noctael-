@@ -1,16 +1,9 @@
-<<<<<<< HEAD
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 import AccountProfile from "../../components/account/profile"
 import AccountOrders from "../../components/account/orders"
 import AccountAddresses from "../../components/account/addresses"
 import AccountWishlist from "../../components/account/wishlist"
-=======
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
-import AccountProfile from "../components/account/profile"
-import AccountOrders from "../components/account/orders"
-import AccountAddresses from "../components/account/addresses"
-import AccountWishlist from "../components/account/wishlist"
->>>>>>> master
+
 
 export default function AccountPage() {
   return (

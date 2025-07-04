@@ -1,19 +1,12 @@
 import { Link } from "react-router-dom"
 import { ShoppingBag } from "lucide-react"
 
-<<<<<<< HEAD
 import { Button } from "../../components/ui/button"
 import FeaturedProducts from "../../components/featured-products"
 import PromoCarousel from "../../components/promo-carousel"
 import CategoryGrid from "../../components/category-grid"
 import Newsletter from "../../components/newsletter"
-=======
-import { Button } from "../components/ui/button"
-import FeaturedProducts from "../components/featured-products"
-import PromoCarousel from "../components/promo-carousel"
-import CategoryGrid from "../components/category-grid"
-import Newsletter from "../components/newsletter"
->>>>>>> master
+
 
 export default function HomePage() {
   return (

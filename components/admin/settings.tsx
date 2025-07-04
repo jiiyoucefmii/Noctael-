@@ -2,11 +2,8 @@
 
 import { useState } from "react"
 import { Save, Loader2 } from "lucide-react"
-<<<<<<< HEAD
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "your-select-component-library" // Import Select components
-=======
+
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
->>>>>>> master
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

@@ -1,11 +1,6 @@
 import { Link } from "react-router-dom"
-<<<<<<< HEAD
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card"
 import LoginForm from "../../components/login-form"
-=======
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card"
-import LoginForm from "../components/login-form"
->>>>>>> master
 
 export default function LoginPage() {
   return (
