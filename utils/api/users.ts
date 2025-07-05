@@ -5,9 +5,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 export interface User {
   id?: number;
   email: string;
-  first_name?: string;
-  last_name?: string;
-  phone_number?: string;
+  first_name: string;
+  last_name: string;
+  phone_number: string;
 }
 
 export interface LoginCredentials {
@@ -18,9 +18,9 @@ export interface LoginCredentials {
 export interface RegisterData {
   email: string;
   password: string;
-  first_name?: string;
-  last_name?: string;
-  phone_number?: string;
+  first_name: string;
+  last_name: string;
+  phone_number: string;
 }
 
 export interface UpdatePasswordData {
@@ -50,18 +50,6 @@ export async function getCurrentUser() {
   return res.data;
 }
 
-// Profile Management
-export async function updateUserProfile(data: User) {
-  const res = await axios.put(`${API_URL}/users/profile`, data, { withCredentials: true });
-  return res.data;
-}
-
-export async function updateUserPassword(data: UpdatePasswordData) {
-  const res = await axios.put(`${API_URL}/users/password`, data, { withCredentials: true });
-  return res.data;
-}
-
-// Email + Password Recovery
 export async function verifyEmail(token: string) {
   const res = await axios.post(`${API_URL}/auth/verify-email`, { token }, { withCredentials: true });
   return res.data;
@@ -79,5 +67,31 @@ export async function requestPasswordReset(email: string) {
 
 export async function resetPassword(token: string, password: string) {
   const res = await axios.post(`${API_URL}/auth/reset-password`, { token, password }, { withCredentials: true });
+  return res.data;
+}
+
+export async function requestEmailChange(new_email: string) {
+  const res = await axios.post(`${API_URL}/auth/change-email`, { new_email }, { withCredentials: true });
+  return res.data;
+}
+
+export async function confirmEmailChange(token: string) {
+  const res = await axios.post(`${API_URL}/auth/confirm-email-change`, { token }, { withCredentials: true });
+  return res.data;
+}
+
+export async function verifyEmailChange(token: string) {
+  const res = await axios.post(`${API_URL}/auth/verify-email-change`, { token }, { withCredentials: true });
+  return res.data;
+}
+
+// Users APIs (still valid and used)
+export async function updateUserProfile(data: User) {
+  const res = await axios.put(`${API_URL}/users/profile`, data, { withCredentials: true });
+  return res.data;
+}
+
+export async function updateUserPassword(data: UpdatePasswordData) {
+  const res = await axios.put(`${API_URL}/users/password`, data, { withCredentials: true });
   return res.data;
 }

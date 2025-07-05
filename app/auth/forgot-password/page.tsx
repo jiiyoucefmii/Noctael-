@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
+import { requestPasswordReset } from "@/utils/api/users";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -17,7 +18,7 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+  
     if (!email) {
       toast({
         title: "Error",
@@ -26,8 +27,7 @@ export default function ForgotPasswordPage() {
       })
       return
     }
-
-    // Basic email validation
+  
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       toast({
@@ -37,22 +37,23 @@ export default function ForgotPasswordPage() {
       })
       return
     }
-
+  
     setIsLoading(true)
-
+  
     try {
-      // Simulate API call - replace with actual forgot password logic
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
+      await requestPasswordReset(email)
+  
       setIsEmailSent(true)
       toast({
         title: "Email Sent!",
         description: "Check your email for password reset instructions.",
       })
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to send reset email. Please try again.",
+        description:
+          error.response?.data?.message ||
+          "Failed to send reset email. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -60,6 +61,7 @@ export default function ForgotPasswordPage() {
     }
   }
 
+  
   if (isEmailSent) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

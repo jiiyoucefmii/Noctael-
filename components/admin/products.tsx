@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Edit, Plus, Search, Trash } from "lucide-react"
 
@@ -20,8 +20,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { getProducts } from "@/lib/products"
-import type { Product } from "@/types/product"
+import { getProducts, deleteProduct, type Product } from "@/utils/api/products"
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([])
@@ -30,28 +29,47 @@ export default function AdminProducts() {
   const { toast } = useToast()
 
   // Fetch products on component mount
-  useState(() => {
+  useEffect(() => {
     const fetchProducts = async () => {
-      const data = await getProducts()
-      setProducts(data)
-      setIsLoading(false)
+      try {
+        const data = await getProducts()
+        setProducts(data)
+      } catch (error) {
+        console.error("Error fetching products:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load products. Please try again later.",
+          variant: "destructive"
+        })
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     fetchProducts()
-  })
+  }, [toast])
 
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase()),
+      product.category_id.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const handleDeleteProduct = (id: string) => {
-    setProducts(products.filter((product) => product.id !== id))
-    toast({
-      title: "Product deleted",
-      description: "The product has been deleted successfully.",
-    })
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      await deleteProduct(id)
+      setProducts(products.filter((product) => product.id !== id))
+      toast({
+        title: "Product deleted",
+        description: "The product has been deleted successfully.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete product. Please try again.",
+        variant: "destructive"
+      })
+    }
   }
 
   return (
@@ -155,7 +173,7 @@ export default function AdminProducts() {
             <TableRow>
               <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
+              <TableHead>Category ID</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -188,8 +206,12 @@ export default function AdminProducts() {
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell>${product.price.toFixed(2)}</TableCell>
+                  <TableCell>{product.category_id}</TableCell>
+                  <TableCell>
+                    ${typeof product.price === 'number'
+                      ? product.price.toFixed(2)
+                      : parseFloat(product.price).toFixed(2)}
+                  </TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon">
