@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { loginUser } from "@/utils/api/users" 
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
@@ -21,22 +20,48 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!email || !password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      const user = await loginUser({ email, password })
-
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${user.first_name || "user"}!`,
-      })
-
-      router.push("/account")
+      // Simulate API call - replace with actual login logic
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Check demo credentials
+      if (email === "admin@noctael.com" && password === "admin123") {
+        toast({
+          title: "Welcome back!",
+          description: "Logged in as Admin.",
+        })
+        // Redirect to admin dashboard
+        router.push("/admin")
+      } else if (email === "user@example.com" && password === "password123") {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully logged in.",
+        })
+        // Redirect to home or account
+        router.push("/")
+      } else {
+        toast({
+          title: "Error",
+          description: "Invalid email or password.",
+          variant: "destructive",
+        })
+      }
     } catch (error: any) {
       toast({
         title: "Login failed",
-        description:
-          error.response?.data?.message || "Something went wrong. Please try again.",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -54,18 +79,18 @@ export default function LoginForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="Enter your email"
         />
       </div>
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
-        </div>
+        <Label htmlFor="password">Password</Label>
         <Input
           id="password"
           type="password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter your password"
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
