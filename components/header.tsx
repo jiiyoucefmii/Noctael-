@@ -53,8 +53,12 @@ export default function Header() {
           <SheetContent side="left" className="w-[300px]">
             <div className="flex h-full flex-col">
               <div className="flex items-center justify-between border-b py-4">
-                <Link href="/" className="font-bold">
-                  NOCTAEL
+                <Link href="/" className="flex items-center">
+                  <img 
+                    src="/logo.svg" 
+                    alt="Noctael" 
+                    className="h-8 w-auto"
+                  />
                 </Link>
               </div>
               <div className="flex-1 overflow-auto py-4">
@@ -89,8 +93,12 @@ export default function Header() {
 
         {/* Logo - centered on mobile, left-aligned on desktop */}
         <div className="flex-1 lg:flex-none">
-          <Link href="/" className="text-xl font-bold text-center lg:text-left block lg:inline">
-            NOCTAEL
+          <Link href="/" className="flex items-center justify-center lg:justify-start">
+            <img 
+              src="/logo.svg" 
+              alt="Noctael" 
+              className="h-8 w-auto"
+            />
           </Link>
         </div>
 
