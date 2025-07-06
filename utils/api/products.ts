@@ -7,7 +7,7 @@ export interface Product {
   name: string;
   description?: string;
   price: number;
-  categoryId: string;
+  category: string;
   gender?: "men" | "women" | "unisex";
   isNew: boolean;
   isFeatured: boolean;
