@@ -33,6 +33,7 @@ export default function AdminProducts() {
     const fetchProducts = async () => {
       try {
         const data = await getProducts()
+        console.log("Fetched products:", data)
         setProducts(data)
       } catch (error) {
         console.error("Error fetching products:", error)
@@ -52,7 +53,7 @@ export default function AdminProducts() {
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category_id.toLowerCase().includes(searchQuery.toLowerCase()),
+      product.categoryId.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   const handleDeleteProduct = async (id: string) => {
@@ -173,7 +174,7 @@ export default function AdminProducts() {
             <TableRow>
               <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Category ID</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -206,7 +207,7 @@ export default function AdminProducts() {
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.category_id}</TableCell>
+                  <TableCell>{product.category_name}</TableCell>
                   <TableCell>
                     ${typeof product.price === 'number'
                       ? product.price.toFixed(2)
