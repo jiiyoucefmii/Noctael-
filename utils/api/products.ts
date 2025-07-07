@@ -1,27 +1,41 @@
+// lib/api/products.ts
+
 import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
+export interface ProductVariant {
+  id?: string;
+  product_id?: string;
+  color: string;
+  size: string;
+  price: number;
+  sale_price?: number;
+  stock: number;
+  images?: ProductImage[];
+}
+
+export interface ProductImage {
+  image_url: string;
+}
+
 export interface Product {
   id: string;
   name: string;
-  description?: string;
-  price: number;
-  categoryId: string;
+  description: string;
+  category_id: string;
   category_name: string;
-  gender?: "men" | "women" | "unisex";
-  isNew: boolean;
-  isFeatured: boolean;
-  isOnSale: boolean;
-  salePrice?: number;
-  stock: number;
-  images: string[];
-  sizes?: string[];
-  colors?: string[];
-  createdAt: string;
-  updatedAt: string;
+  gender: "men" | "women" | "unisex";
+  is_new: boolean;
+  is_featured: boolean;
+  is_on_sale: boolean;
+  created_at: string;
+  updated_at: string;
+  variants: ProductVariant[];
+  colors: string[];
+  sizes: string[];
+  main_image: string;
 }
-
 
 export interface ProductsResponse {
   products: Product[];
@@ -33,11 +47,14 @@ export interface ProductResponse {
 }
 
 export interface ProductsQueryParams {
-  category?: string;
+  query?: string;
+  category_id?: string;
   gender?: string;
-  featured?: boolean;
-  new?: boolean;
-  onSale?: boolean;
+  min_price?: number;
+  max_price?: number;
+  is_new?: boolean;
+  is_featured?: boolean;
+  is_on_sale?: boolean;
   sort?: string;
   limit?: number;
   page?: number;
@@ -48,94 +65,119 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-export async function getProducts(params?: ProductsQueryParams): Promise<Product[]> {
-  try {
-    // Convert filter parameters to match the API's expected format
-    const apiParams: Record<string, any> = {};
-    
-    if (params) {
-      // Map our frontend filter params to API params
-      if (params.category) apiParams.category_id = params.category;
-      if (params.gender) apiParams.gender = params.gender;
-      if (params.new) apiParams.is_new = params.new;
-      if (params.onSale) apiParams.is_on_sale = params.onSale;
-      if (params.featured) apiParams.is_featured = params.featured;
-      if (params.sort) apiParams.sort = params.sort;
-      if (params.limit) apiParams.limit = params.limit;
-      if (params.page) apiParams.page = params.page;
-    }
-    
-    console.log('API request params:', apiParams);
-    
-    const response = await axiosInstance.get<ProductsResponse>('/products', { 
-      params: apiParams
-    });
-    
-    // Handle both possible API response structures
-    const products = response.data.products || response.data;
-    return Array.isArray(products) ? products : [];
-    
-  } catch (error: any) {
-    console.error("Error fetching products:", error);
-    throw new Error(error.response?.data?.message || 'Failed to fetch products');
-  }
+// --- Products ---
+
+export async function getProducts(): Promise<Product[]> {
+  const res = await axiosInstance.get<ProductsResponse>('/products');
+  return res.data.products;
+}
+
+export async function searchProducts(params: ProductsQueryParams): Promise<Product[]> {
+  const res = await axiosInstance.get<ProductsResponse>('/products/search', { params });
+  return res.data.products;
 }
 
 export async function getProductById(id: string): Promise<Product> {
-  try {
-    const response = await axiosInstance.get<ProductResponse>(`/products/${id}`);
-    return response.data.product;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch product');
-  }
+  const res = await axiosInstance.get<ProductResponse>(`/products/${id}`);
+  return res.data.product;
 }
 
-export async function getProductsByCategory(category: string): Promise<Product[]> {
-  try {
-    const response = await axiosInstance.get<ProductsResponse>('/products', {
-      params: { category }
-    });
-    return response.data.products;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch products by category');
-  }
-}
-
-export async function getFeaturedProducts(limit = 4): Promise<Product[]> {
-  try {
-    const response = await axiosInstance.get<ProductsResponse>('/products', { 
-      params: { featured: true, limit }
-    });
-    return response.data.products;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch featured products');
-  }
-}
-
-// Admin endpoints
 export async function createProduct(productData: Partial<Product>) {
-  try {
-    const response = await axiosInstance.post('/products', productData);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to create product');
-  }
+  const res = await axiosInstance.post('/products', productData);
+  return res.data;
 }
 
 export async function updateProduct(id: string, productData: Partial<Product>) {
-  try {
-    const response = await axiosInstance.put(`/products/${id}`, productData);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to update product');
-  }
+  const res = await axiosInstance.put(`/products/${id}`, productData);
+  return res.data;
 }
 
 export async function deleteProduct(id: string) {
-  try {
-    const response = await axiosInstance.delete(`/products/${id}`);
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to delete product');
-  }
+  const res = await axiosInstance.delete(`/products/${id}`);
+  return res.data;
+}
+
+// --- Product Variants ---
+
+export async function getProductVariants(productId: string): Promise<ProductVariant[]> {
+  const res = await axiosInstance.get<{ variants: ProductVariant[] }>(`/products/${productId}/variants`);
+  return res.data.variants;
+}
+
+export async function addProductVariant(productId: string, variantData: Omit<ProductVariant, 'id' | 'product_id'>) {
+  const res = await axiosInstance.post(`/products/${productId}/variants`, variantData);
+  return res.data;
+}
+
+export async function updateProductVariant(variantId: string, updateData: Partial<ProductVariant>) {
+  const res = await axiosInstance.put(`/products/variants/${variantId}`, updateData);
+  return res.data;
+}
+
+export async function deleteProductVariant(variantId: string) {
+  const res = await axiosInstance.delete(`/products/variants/${variantId}`);
+  return res.data;
+}
+
+// --- Additional Product Routes ---
+
+export async function getFeaturedProducts(): Promise<Product[]> {
+  const res = await axiosInstance.get<ProductsResponse>('/products/featured');
+  return res.data.products;
+}
+
+export async function getNewProducts(): Promise<Product[]> {
+  const res = await axiosInstance.get<ProductsResponse>('/products/new');
+  return res.data.products;
+}
+
+export async function getSaleProducts(): Promise<Product[]> {
+  const res = await axiosInstance.get<ProductsResponse>('/products/sale');
+  return res.data.products;
+}
+
+export async function getProductsByCategory(categoryId: string): Promise<Product[]> {
+  const res = await axiosInstance.get(`/products/category/${categoryId}`);
+  return res.data.products;
+}
+
+export async function getProductColors(productId: string): Promise<{ color: string; thumbnail?: string }[]> {
+  const res = await axiosInstance.get<{ colors: { color: string; thumbnail?: string }[] }>(`/products/${productId}/colors`);
+  return res.data.colors;
+}
+
+export async function getProductSizes(productId: string, color?: string): Promise<{ size: string; available: boolean }[]> {
+  const res = await axiosInstance.get<{ sizes: { size: string; available: boolean }[] }>(
+    `/products/${productId}/sizes`,
+    { params: color ? { color } : {} }
+  );
+  return res.data.sizes;
+}
+
+export async function getVariantsByColor(productId: string, color: string): Promise<ProductVariant[]> {
+  const res = await axiosInstance.get<{ variants: ProductVariant[] }>(
+    `/products/${productId}/variants-by-color`,
+    { params: { color } }
+  );
+  return res.data.variants;
+}
+
+export async function checkVariantAvailability(
+  productId: string,
+  color: string,
+  size: string
+): Promise<{
+  variant_id: string;
+  product_id: string;
+  color: string;
+  size: string;
+  available: boolean;
+  in_stock: number;
+  price: number;
+  image?: string;
+}> {
+  const res = await axiosInstance.get(`/products/${productId}/check-variant`, {
+    params: { color, size },
+  });
+  return res.data;
 }

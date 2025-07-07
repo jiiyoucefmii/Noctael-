@@ -1,122 +1,106 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Search } from "lucide-react"
+import { getUsersWithOrders, UserWithOrders } from "@/utils/api/users"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
-// Mock customers data
-const customers = [
-  {
-    id: "CUST-001",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    orders: 5,
-    spent: 349.95,
-    joined: "2023-01-15",
-  },
-  {
-    id: "CUST-002",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    orders: 3,
-    spent: 189.97,
-    joined: "2023-02-20",
-  },
-  {
-    id: "CUST-003",
-    name: "Robert Johnson",
-    email: "robert.johnson@example.com",
-    orders: 8,
-    spent: 599.92,
-    joined: "2022-11-05",
-  },
-  {
-    id: "CUST-004",
-    name: "Emily Davis",
-    email: "emily.davis@example.com",
-    orders: 2,
-    spent: 129.98,
-    joined: "2023-03-10",
-  },
-  {
-    id: "CUST-005",
-    name: "Michael Wilson",
-    email: "michael.wilson@example.com",
-    orders: 6,
-    spent: 429.94,
-    joined: "2022-12-18",
-  },
-]
+interface Customer {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  orders_count: number
+  total_spent: number
+  joined_date: string
+}
 
 export default function AdminCustomers() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [search, setSearch] = useState("")
 
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchQuery.toLowerCase()),
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const data = await getUsersWithOrders()
+        const formatted = data.users.map((user: UserWithOrders) => ({
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          orders_count: user.orders?.length || 0,
+          total_spent: user.orders?.reduce((sum, order) => sum + (order.total || 0), 0),
+          joined_date: new Date(user.createdAt).toISOString().split("T")[0],
+        }))
+        setCustomers(formatted)
+      } catch (error) {
+        console.error("Failed to fetch customers:", error)
+      }
+    }
+
+    fetchCustomers()
+  }, [])
+
+  const filteredCustomers = customers.filter((customer) =>
+    `${customer.first_name} ${customer.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
+    customer.email.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
-    <div>
-      <h1 className="mb-6 text-2xl font-bold">Customers</h1>
-
-      <div className="mb-6">
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">Customers</h2>
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search customers..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
           />
         </div>
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Customer ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Orders</TableHead>
-              <TableHead>Total Spent</TableHead>
-              <TableHead>Joined</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Orders</TableHead>
+            <TableHead>Total Spent</TableHead>
+            <TableHead>Date Joined</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredCustomers.map((customer) => (
+            <TableRow key={customer.id}>
+              <TableCell>
+                {customer.first_name} {customer.last_name}
+              </TableCell>
+              <TableCell>{customer.email}</TableCell>
+              <TableCell>{customer.orders_count}</TableCell>
+              <TableCell>
+                {customer.total_spent.toLocaleString("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                })}
+              </TableCell>
+              <TableCell>{customer.joined_date}</TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCustomers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  No customers found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.id}</TableCell>
-                  <TableCell>{customer.name}</TableCell>
-                  <TableCell>{customer.email}</TableCell>
-                  <TableCell>{customer.orders}</TableCell>
-                  <TableCell>${customer.spent.toFixed(2)}</TableCell>
-                  <TableCell>{customer.joined}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="outline" size="sm">
-                      View
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   )
 }

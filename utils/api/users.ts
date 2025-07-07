@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Order } from './orders';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -9,6 +10,13 @@ export interface User {
   last_name: string;
   phone_number: string;
 }
+
+
+export interface UserWithOrders extends User {
+  orders: Order[]
+  createdAt: string
+}
+
 
 export interface LoginCredentials {
   email: string;
@@ -85,7 +93,7 @@ export async function verifyEmailChange(token: string) {
   return res.data;
 }
 
-// Users APIs (still valid and used)
+// Users APIs
 export async function updateUserProfile(data: User) {
   const res = await axios.put(`${API_URL}/users/profile`, data, { withCredentials: true });
   return res.data;
@@ -93,5 +101,20 @@ export async function updateUserProfile(data: User) {
 
 export async function updateUserPassword(data: UpdatePasswordData) {
   const res = await axios.put(`${API_URL}/users/password`, data, { withCredentials: true });
+  return res.data;
+}
+
+/**
+ * Fetch all users along with their associated orders.
+ */
+export async function getUsersWithOrders() {
+  const res = await axios.get(`${API_URL}/users/with-orders`, { withCredentials: true });
+  return res.data;
+}
+
+
+
+export async function getUserById(user_id: string) {
+  const res = await axios.get(`${API_URL}/users/${user_id}`, { withCredentials: true });
   return res.data;
 }
