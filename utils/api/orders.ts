@@ -18,9 +18,9 @@ export interface OrderItem {
   quantity: number;
   price: number;
   product_name: string;
-  product_color: string;
-  product_size: string;
-  product_image: string;
+  product_color?: string;
+  product_size?: string;
+  product_image?: string;
 }
 
 export interface OrderStatusHistory {
@@ -67,6 +67,47 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+
+
+
+
+
+// Add this interface for UserStatistics
+interface UserStatistics {
+  user_info: {
+    id: string
+    email: string
+    first_name: string
+    last_name: string
+    phone_number: string
+    created_at: string
+    is_verified: boolean
+  }
+  order_statistics: {
+    total_orders: number  // Changed from string to number
+    total_spent: number   // Changed from string to number
+    average_order_value: number  // Changed from string to number
+    first_order_date: string
+    last_order_date: string
+    pending_orders: number  // Changed from string to number
+    accepted_orders: number  // Changed from string to number
+    monthly_spending: Array<{
+      month: string
+      order_count: number  // Changed from string to number
+      total_spent: number  // Changed from string to number
+    }>
+    favorite_categories: Array<{
+      category_name: string
+      items_ordered: number  // Changed from string to number
+      total_quantity: number  // Changed from string to number
+    }>
+  }
+  recent_orders: Order[]
+  wishlist_items: number  // Changed from string to number
+  cart_items: number  // Changed from string to number
+  saved_addresses: number  // Changed from string to number
+}
+
 // =================== User ===================
 
 export async function getUserOrders(): Promise<{ orders: Order[]; count: number }> {
@@ -107,11 +148,51 @@ export async function getAllOrders(): Promise<{ orders: Order[]; count: number }
   }
 }
 
+export async function getOrdersByUserId(
+  userId: string,
+  options?: {
+    page?: number;
+    limit?: number;
+    status?: 'pending' | 'accepted';
+  }
+): Promise<{
+  user_id: string;
+  orders: Order[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+  };
+}> {
+  try {
+    const params = new URLSearchParams();
+    if (options?.page) params.append('page', options.page.toString());
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.status) params.append('status', options.status);
+
+    const response = await axiosInstance.get(`/orders/user/${userId}?${params.toString()}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch user orders');
+  }
+}
+
 export async function updateOrderStatus(orderId: string, status: 'pending' | 'accepted'): Promise<{ message: string; order: Order }> {
   try {
     const response = await axiosInstance.patch(`/orders/${orderId}/status`, { status });
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update order status');
+  }
+}
+
+
+export async function getUserStatistics(userId: string): Promise<UserStatistics> {
+  try {
+    const response = await axiosInstance.get(`/orders/user/${userId}/statistics`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch user statistics');
   }
 }

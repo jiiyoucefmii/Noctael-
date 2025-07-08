@@ -12,8 +12,13 @@ export interface User {
 }
 
 
-export interface UserWithOrders extends User {
-  orders: Order[]
+interface UserWithOrders extends User {
+  orders?: {
+    id: string
+    created_at: string
+    total: number
+    // other order fields
+  }[]
   createdAt: string
 }
 
