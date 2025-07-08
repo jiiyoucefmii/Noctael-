@@ -4,26 +4,30 @@ const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
 export interface CartItem {
   id: string;
-  productId: string;
+  variant_id: string;
+  product_id: string;
   quantity: number;
-  size?: string;
+  name: string;
+  price: number;
   color?: string;
-  product?: {
-    id: string;
-    name: string;
-    price: number;
-    salePrice?: number;
-    imageUrl?: string;
-  };
+  size?: string;
+  image?: string;
+  item_total: number;
 }
 
-// Use shared axios instance for credentials/session-based auth
+export interface Cart {
+  cart_id: string;
+  items: CartItem[];
+  count: number;
+  subtotal: number;
+}
+
 const axiosInstance = axios.create({
   baseURL: API_URL,
   withCredentials: true,
 });
 
-export async function getCart() {
+export async function getCart(): Promise<Cart> {
   try {
     const response = await axiosInstance.get('/cart');
     return response.data;
@@ -32,13 +36,11 @@ export async function getCart() {
   }
 }
 
-export async function addToCart(productId: string, quantity: number, size?: string, color?: string) {
+export async function addToCart(variant_id: string, quantity: number = 1): Promise<{ message: string; cart_item: CartItem }> {
   try {
     const response = await axiosInstance.post('/cart/add', {
-      product_id: productId,
+      variant_id,
       quantity,
-      size,
-      color,
     });
     return response.data;
   } catch (error: any) {
@@ -46,25 +48,25 @@ export async function addToCart(productId: string, quantity: number, size?: stri
   }
 }
 
-export async function updateCartItem(cartItemId: string, quantity: number) {
+export async function updateCartItem(cart_item_id: string, quantity: number): Promise<{ message: string; cart_item: CartItem }> {
   try {
-    const response = await axiosInstance.put(`/cart/items/${cartItemId}`, { quantity });
+    const response = await axiosInstance.put(`/cart/${cart_item_id}`, { quantity });
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update cart item');
   }
 }
 
-export async function removeFromCart(cartItemId: string) {
+export async function removeFromCart(cart_item_id: string): Promise<{ message: string; removed_id: string }> {
   try {
-    const response = await axiosInstance.delete(`/cart/items/${cartItemId}`);
+    const response = await axiosInstance.delete(`/cart/${cart_item_id}`);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to remove from cart');
+    throw new Error(error.response?.data?.message || 'Failed to remove item from cart');
   }
 }
 
-export async function clearCart() {
+export async function clearCart(): Promise<{ message: string }> {
   try {
     const response = await axiosInstance.delete('/cart/clear');
     return response.data;
@@ -73,11 +75,11 @@ export async function clearCart() {
   }
 }
 
-export async function mergeCart() {
+export async function transferGuestCart(): Promise<{ message: string }> {
   try {
-    const response = await axiosInstance.post('/cart/merge');
+    const response = await axiosInstance.post('/cart/transfer');
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to merge cart');
+    throw new Error(error.response?.data?.message || 'Failed to transfer guest cart');
   }
 }

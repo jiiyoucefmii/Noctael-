@@ -2,38 +2,58 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
-export interface Order {
+export interface Address {
   id: string;
-  userId: string;
-  status: 'pending' | 'accepted';
-  total: number;
-  shippingAddressId: string;
-  createdAt: string;
-  updatedAt: string;
-  items?: OrderItem[];
-  shippingAddress?: {
-    id: string;
-    name: string;
-    address: string;
-    city: string;
-    state: string;
-    zip: string;
-    country: string;
-  };
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
 }
 
 export interface OrderItem {
   id: string;
-  orderId: string;
-  productId: string;
+  variant_id: string;
   quantity: number;
-  size?: string;
   price: number;
-  product?: {
+  product_name: string;
+  product_color?: string;
+  product_size?: string;
+  product_image?: string;
+}
+
+export interface OrderStatusHistory {
+  status: 'pending' | 'accepted';
+  changed_at: string;
+}
+
+export interface Discount {
+  id: string;
+  code: string;
+  percent: number;
+  amount: number;
+}
+
+export interface Order {
+  id: string;
+  user_id: string;
+  status: 'pending' | 'accepted';
+  subtotal: number;
+  discount_amount?: number;
+  total: number;
+  created_at: string;
+  updated_at: string;
+  items: OrderItem[];
+  shipping_address: Address;
+  user?: {
     id: string;
-    name: string;
-    imageUrl?: string;
+    email: string;
+    first_name: string;
+    last_name: string;
   };
+  status_history: OrderStatusHistory[];
+  discount?: Discount;
 }
 
 export interface CheckoutData {
@@ -47,18 +67,59 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+
+
+
+
+
+// Add this interface for UserStatistics
+interface UserStatistics {
+  user_info: {
+    id: string
+    email: string
+    first_name: string
+    last_name: string
+    phone_number: string
+    created_at: string
+    is_verified: boolean
+  }
+  order_statistics: {
+    total_orders: number  // Changed from string to number
+    total_spent: number   // Changed from string to number
+    average_order_value: number  // Changed from string to number
+    first_order_date: string
+    last_order_date: string
+    pending_orders: number  // Changed from string to number
+    accepted_orders: number  // Changed from string to number
+    monthly_spending: Array<{
+      month: string
+      order_count: number  // Changed from string to number
+      total_spent: number  // Changed from string to number
+    }>
+    favorite_categories: Array<{
+      category_name: string
+      items_ordered: number  // Changed from string to number
+      total_quantity: number  // Changed from string to number
+    }>
+  }
+  recent_orders: Order[]
+  wishlist_items: number  // Changed from string to number
+  cart_items: number  // Changed from string to number
+  saved_addresses: number  // Changed from string to number
+}
+
 // =================== User ===================
 
-export async function getUserOrders() {
+export async function getUserOrders(): Promise<{ orders: Order[]; count: number }> {
   try {
-    const response = await axiosInstance.get('/orders/user');
+    const response = await axiosInstance.get('/orders/user/me');
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch user orders');
   }
 }
 
-export async function getOrderById(orderId: string) {
+export async function getOrderById(orderId: string): Promise<{ order: Order }> {
   try {
     const response = await axiosInstance.get(`/orders/${orderId}`);
     return response.data;
@@ -67,7 +128,7 @@ export async function getOrderById(orderId: string) {
   }
 }
 
-export async function createOrder(checkoutData: CheckoutData) {
+export async function createOrder(checkoutData: CheckoutData): Promise<{ message: string; order: Order }> {
   try {
     const response = await axiosInstance.post('/orders', checkoutData);
     return response.data;
@@ -78,7 +139,7 @@ export async function createOrder(checkoutData: CheckoutData) {
 
 // =================== Admin ===================
 
-export async function getAllOrders() {
+export async function getAllOrders(): Promise<{ orders: Order[]; count: number }> {
   try {
     const response = await axiosInstance.get('/orders');
     return response.data;
@@ -87,11 +148,51 @@ export async function getAllOrders() {
   }
 }
 
-export async function updateOrderStatus(orderId: string, status: 'pending' | 'accepted') {
+export async function getOrdersByUserId(
+  userId: string,
+  options?: {
+    page?: number;
+    limit?: number;
+    status?: 'pending' | 'accepted';
+  }
+): Promise<{
+  user_id: string;
+  orders: Order[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+  };
+}> {
   try {
-    const response = await axiosInstance.put(`/orders/${orderId}/status`, { status });
+    const params = new URLSearchParams();
+    if (options?.page) params.append('page', options.page.toString());
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.status) params.append('status', options.status);
+
+    const response = await axiosInstance.get(`/orders/user/${userId}?${params.toString()}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch user orders');
+  }
+}
+
+export async function updateOrderStatus(orderId: string, status: 'pending' | 'accepted'): Promise<{ message: string; order: Order }> {
+  try {
+    const response = await axiosInstance.patch(`/orders/${orderId}/status`, { status });
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update order status');
+  }
+}
+
+
+export async function getUserStatistics(userId: string): Promise<UserStatistics> {
+  try {
+    const response = await axiosInstance.get(`/orders/user/${userId}/statistics`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch user statistics');
   }
 }

@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Edit, Trash } from "lucide-react"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Edit, Trash } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,60 +12,119 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
-
-// Mock addresses data
-const addresses = [
-  {
-    id: 1,
-    name: "Home",
-    address: "123 Main Street",
-    city: "New York",
-    state: "NY",
-    zip: "10001",
-    country: "United States",
-    isDefault: true,
-  },
-  {
-    id: 2,
-    name: "Work",
-    address: "456 Office Avenue",
-    city: "New York",
-    state: "NY",
-    zip: "10002",
-    country: "United States",
-    isDefault: false,
-  },
-]
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import {
+  getUserAddresses,
+  deleteAddress,
+  setDefaultAddress,
+  createAddress,
+  updateAddress,
+  type Address,
+} from "@/utils/api/addresses";
 
 export default function AccountAddresses() {
-  const [userAddresses, setUserAddresses] = useState(addresses)
-  const { toast } = useToast()
+  const [userAddresses, setUserAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState<Omit<Address, 'user_id' | 'created_at' | 'updated_at'>>({
+    id: undefined,
+    name: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+    country: "",
+  });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
 
-  const handleDelete = (id: number) => {
-    setUserAddresses(userAddresses.filter((address) => address.id !== id))
-    toast({
-      title: "Address deleted",
-      description: "The address has been deleted successfully.",
-    })
-  }
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const response = await getUserAddresses();
+        setUserAddresses(response.addresses || []);
+      } catch (err: any) {
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleSetDefault = (id: number) => {
-    setUserAddresses(
-      userAddresses.map((address) => ({
-        ...address,
-        isDefault: address.id === id,
-      })),
-    )
-    toast({
-      title: "Default address updated",
-      description: "Your default address has been updated.",
-    })
-  }
+    fetchAddresses();
+  }, [toast]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      id: undefined,
+      name: "",
+      address: "",
+      city: "",
+      state: "",
+      zip: "",
+      country: "",
+    });
+  };
+
+  const handleDialogClose = () => {
+    resetForm();
+    setIsDialogOpen(false);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      if (formData.id) {
+        const { address } = await updateAddress(formData.id, formData);
+        setUserAddresses((prev) =>
+          prev.map((a) => (a.id === address.id ? address : a))
+        );
+        toast({ title: "Address updated", description: "Address changes saved." });
+      } else {
+        const { address } = await createAddress(formData);
+        setUserAddresses((prev) => [...prev, address]);
+        toast({ title: "Address added", description: "Your new address has been saved." });
+      }
+      handleDialogClose();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleEdit = (address: Address) => {
+    setFormData(address);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAddress(id);
+      setUserAddresses((prev) => prev.filter((a) => a.id !== id));
+      toast({ title: "Address deleted", description: "The address has been deleted successfully." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      await setDefaultAddress(id);
+      setUserAddresses((prev) =>
+        prev.map((address) => ({
+          ...address,
+          is_default: address.id === id,
+        }))
+      );
+      toast({ title: "Default address updated", description: "Your default address has been updated." });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
   return (
     <Card>
@@ -74,59 +133,43 @@ export default function AccountAddresses() {
           <CardTitle>Saved Addresses</CardTitle>
           <CardDescription>Manage your shipping addresses</CardDescription>
         </div>
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Address
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Add New Address</DialogTitle>
-              <DialogDescription>Add a new shipping address to your account.</DialogDescription>
+              <DialogTitle>{formData.id ? "Edit Address" : "Add New Address"}</DialogTitle>
+              <DialogDescription>
+                {formData.id ? "Update your address details." : "Add a new shipping address to your account."}
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Address Name</Label>
-                <Input id="name" placeholder="Home, Work, etc." />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Street Address</Label>
-                <Input id="address" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input id="city" />
+              {["name", "address", "city", "state", "zip", "country"].map((field) => (
+                <div key={field} className="space-y-2">
+                  <Label htmlFor={field}>{field.charAt(0).toUpperCase() + field.slice(1)}</Label>
+                  <Input id={field} value={(formData as any)[field]} onChange={handleInputChange} />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">State/Province</Label>
-                  <Input id="state" />
-                </div>
-              </div>
-
+              ))}
             </div>
             <DialogFooter>
-              <Button type="submit">Save Address</Button>
+              <Button type="button" onClick={handleSubmit}>
+                {formData.id ? "Update" : "Save"} Address
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </CardHeader>
       <CardContent>
-        {userAddresses.length === 0 ? (
+        {loading ? (
+          <p>Loading...</p>
+        ) : userAddresses.length === 0 ? (
           <div className="flex h-40 flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
             <p className="mb-2 text-lg font-medium">No addresses saved</p>
             <p className="mb-4 text-sm text-gray-500">You haven't added any addresses yet.</p>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Address
-                </Button>
-              </DialogTrigger>
-              {/* Dialog content would be duplicated here */}
-            </Dialog>
           </div>
         ) : (
           <div className="space-y-4">
@@ -135,16 +178,16 @@ export default function AccountAddresses() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <p className="font-medium">{address.name}</p>
-                    {address.isDefault && (
+                    {address.is_default && (
                       <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">Default</span>
                     )}
                   </div>
                   <div className="flex space-x-2">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(address)}>
                       <Edit className="h-4 w-4" />
                       <span className="sr-only">Edit</span>
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(address.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(address.id!)}>
                       <Trash className="h-4 w-4" />
                       <span className="sr-only">Delete</span>
                     </Button>
@@ -152,13 +195,11 @@ export default function AccountAddresses() {
                 </div>
                 <div className="mt-2 text-sm text-gray-500">
                   <p>{address.address}</p>
-                  <p>
-                    {address.city}, {address.state} {address.zip}
-                  </p>
+                  <p>{address.city}, {address.state} {address.zip}</p>
                   <p>{address.country}</p>
                 </div>
-                {!address.isDefault && (
-                  <Button variant="outline" size="sm" className="mt-4" onClick={() => handleSetDefault(address.id)}>
+                {!address.is_default && (
+                  <Button variant="outline" size="sm" className="mt-4" onClick={() => handleSetDefault(address.id!)}>
                     Set as Default
                   </Button>
                 )}
@@ -168,5 +209,5 @@ export default function AccountAddresses() {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

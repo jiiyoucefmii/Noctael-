@@ -10,8 +10,14 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { useCart } from "@/hooks/use-cart"
-import type { Product } from "@/types/product"
-import { getProducts } from "@/lib/products"
+import { getFeaturedProducts, type Product } from "@/utils/api/products"
+
+// Helper function to format gender for display
+function formatGender(gender?: string): string {
+  if (!gender) return "Unisex";
+  
+  return gender.charAt(0).toUpperCase() + gender.slice(1);
+}
 
 export default function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([])
@@ -20,12 +26,21 @@ export default function FeaturedProducts() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const featuredProducts = await getProducts({ featured: true, limit: 4 })
-      setProducts(featuredProducts)
+      try {
+        const featuredProducts = await getFeaturedProducts(4)
+        setProducts(featuredProducts)
+      } catch (error) {
+        console.error("Failed to fetch featured products:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load featured products. Please try again later.",
+          variant: "destructive"
+        })
+      }
     }
 
     fetchProducts()
-  }, [])
+  }, [toast])
 
   const handleAddToCart = (product: Product) => {
     addToCart(product)
@@ -68,8 +83,14 @@ export default function FeaturedProducts() {
             <Link href={`/products/${product.id}`} className="hover:underline">
               <h3 className="font-medium">{product.name}</h3>
             </Link>
-            <p className="mt-1 text-sm text-gray-500">{product.category}</p>
-            <p className="mt-2 font-semibold">${product.price.toFixed(2)}</p>
+            <p className="mt-1 text-sm text-gray-500">
+              {formatGender(product.gender)}
+            </p>
+            <p className="mt-2 font-semibold">
+              ${typeof product.price === 'number' 
+                ? product.price.toFixed(2) 
+                : parseFloat(product.price).toFixed(2)}
+            </p>
           </CardContent>
           <CardFooter className="p-4 pt-0">
             <Button className="w-full" onClick={() => handleAddToCart(product)}>
