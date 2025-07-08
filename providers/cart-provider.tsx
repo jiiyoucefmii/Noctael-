@@ -3,12 +3,8 @@
 import type React from "react"
 
 import { createContext, useContext, useState, useEffect } from "react"
-import type { Product } from "@/types/product"
-
-export interface CartItem extends Product {
-  quantity: number
-  size?: string
-}
+import type { Product } from "@/utils/api/products"
+import type { CartItem } from "@/utils/api/cart"
 
 interface CartContextType {
   items: CartItem[]
@@ -58,7 +54,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return updatedItems
       } else {
         // Add new item
-        return [...prevItems, { ...product, quantity, size }]
+        return [
+          ...prevItems,
+          {
+            ...product,
+            quantity,
+            size,
+            variant_id: product.variant_id || "", // Ensure required fields are provided
+            product_id: product.product_id || "",
+            price: product.price || 0,
+            item_total: (product.price || 0) * quantity,
+          },
+        ]
       }
     })
   }
