@@ -59,8 +59,16 @@ export async function logoutUser() {
 }
 
 export async function getCurrentUser() {
-  const res = await axios.get(`${API_URL}/auth/me`, { withCredentials: true });
-  return res.data;
+  try {
+    const res = await axios.get(`${API_URL}/auth/me`, { withCredentials: true });
+    return res.data;
+  } catch (err: any) {
+    if (err.response && err.response.status === 401) {
+      // Not authenticated, return null or a consistent unauthenticated value
+      return null;
+    }
+    throw err;
+  }
 }
 
 export async function verifyEmail(token: string) {

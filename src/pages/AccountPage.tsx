@@ -1,11 +1,23 @@
+import React from "react"
+import { useNavigate } from "react-router-dom"
+import { Button } from "../../components/ui/button"
+import { useAuth } from "../../hooks/useAuth"
+import { logoutUser } from "../../utils/api/users"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 import AccountProfile from "../../components/account/profile"
 import AccountOrders from "../../components/account/orders"
 import AccountAddresses from "../../components/account/addresses"
 import AccountWishlist from "../../components/account/wishlist"
 
-
 export default function AccountPage() {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
+  const handleLogout = async () => {
+    await logoutUser()
+    navigate("/auth/login")
+  }
+
   return (
     <div className="py-10">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -24,6 +36,9 @@ export default function AccountPage() {
           <TabsContent value="profile">
             <div className="max-w-2xl mx-auto lg:mx-0">
               <AccountProfile />
+              <div className="mt-4">
+                <Button onClick={handleLogout}>Log Out</Button>
+              </div>
             </div>
           </TabsContent>
 

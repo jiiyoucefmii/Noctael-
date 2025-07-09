@@ -19,7 +19,7 @@ export interface Address {
 // Axios instance with credentials
 const axiosInstance = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // important for session-based auth
+  withCredentials: true,
 });
 
 export async function getUserAddresses() {

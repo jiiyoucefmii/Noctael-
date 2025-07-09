@@ -53,8 +53,6 @@ export default function AdminProducts() {
   const [variantList, setVariantList] = useState<typeof newVariant[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [productToDelete, setProductToDelete] = useState<string | null>(null)
-  
-  // New state for category creation
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryParent, setNewCategoryParent] = useState("")
@@ -114,7 +112,6 @@ export default function AdminProducts() {
     }
   }
 
-  // Function to handle category creation
   const handleAddCategory = async () => {
     try {
       const categoryData = {
@@ -125,17 +122,14 @@ export default function AdminProducts() {
       const response = await createCategory(categoryData)
       const createdCategory = response.category
 
-      // Refresh categories list
       const categoriesData = await getCategories()
       setCategories(categoriesData.categories || [])
       
-      // Set the new category as selected
       setNewProduct(prev => ({
         ...prev,
         category_id: createdCategory.id
       }))
 
-      // Reset category creation form
       setNewCategoryName("")
       setNewCategoryParent("")
       setShowAddCategory(false)
@@ -208,7 +202,6 @@ export default function AdminProducts() {
 
   return (
     <div>
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -232,17 +225,16 @@ export default function AdminProducts() {
               <Plus className="mr-2 h-5 w-5" /> Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>Add New Product</DialogTitle>
               <DialogDescription>Enter product details below.</DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-4">
+            <div className="overflow-y-auto flex-1 space-y-4 py-4 px-1">
               <Input placeholder="Product Name" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} />
               <Input placeholder="Description" value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} />
 
-              {/* Category Select */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <select
@@ -310,7 +302,6 @@ export default function AdminProducts() {
                 )}
               </div>
 
-              {/* Gender Select */}
               <select
                 className="w-full p-2 border rounded-md"
                 value={newProduct.gender}
@@ -321,7 +312,6 @@ export default function AdminProducts() {
                 <option value="women">Women</option>
               </select>
 
-              {/* Boolean Flags */}
               <div className="flex items-center gap-4">
                 <label className="flex items-center space-x-2">
                   <input
@@ -352,7 +342,6 @@ export default function AdminProducts() {
               </div>
 
               <div className="grid grid-cols-2 gap-4 w-full">
-                {/* Color */}
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-muted-foreground mb-1">Color</label>
                   <Input
@@ -363,7 +352,6 @@ export default function AdminProducts() {
                   />
                 </div>
 
-                {/* Size */}
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-muted-foreground mb-1">Size</label>
                   <Input
@@ -374,7 +362,6 @@ export default function AdminProducts() {
                   />
                 </div>
 
-                {/* Price */}
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-muted-foreground mb-1">Price</label>
                   <Input
@@ -385,7 +372,6 @@ export default function AdminProducts() {
                   />
                 </div>
 
-                {/* Sale Price */}
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-muted-foreground mb-1">Sale Price</label>
                   <Input
@@ -396,7 +382,6 @@ export default function AdminProducts() {
                   />
                 </div>
 
-                {/* Stock (take full width) */}
                 <div className="flex flex-col col-span-2 sm:col-span-1">
                   <label className="text-sm font-medium text-muted-foreground mb-1">Stock</label>
                   <Input
@@ -407,7 +392,6 @@ export default function AdminProducts() {
                   />
                 </div>
 
-                {/* Upload Images (full width) */}
                 <div className="space-y-2 col-span-2">
                   <label className="text-sm font-medium">Upload Images for This Variant</label>
                   <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center text-center hover:border-gray-500 transition cursor-pointer">
@@ -446,7 +430,6 @@ export default function AdminProducts() {
                   )}
                 </div>
 
-                {/* Add Variant Button (full width) */}
                 <Button type="button" onClick={handleAddVariant} className="col-span-2">
                   Add Variant
                 </Button>
@@ -478,7 +461,7 @@ export default function AdminProducts() {
               )}
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="pt-4 border-t">
               <Button onClick={handleAddProduct}>Save Product</Button>
             </DialogFooter>
           </DialogContent>

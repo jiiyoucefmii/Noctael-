@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { BarChart3, Box, Home, LayoutDashboard, LogOut, Package, Settings, ShoppingCart, Users } from "lucide-react"
+import { BarChart3, Box, Home, LayoutDashboard, LogOut, Package, Settings, ShoppingCart, Users, Tag } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import AdminProducts from "@/components/admin/products"
@@ -12,6 +12,7 @@ import AdminSettings from "@/components/admin/settings"
 import { getAllOrders, getUserStatistics, Order, } from "@/utils/api/orders"
 import {getUsersWithOrders} from "@/utils/api/users"
 import { getProducts } from "@/utils/api/products"
+import AdminPromotions from "./promotions"
 
 const tabs = [
   {
@@ -33,6 +34,11 @@ const tabs = [
     id: "customers",
     label: "Customers",
     icon: Users,
+  },
+  {
+    id: "promotions",
+    label: "Promotions",
+    icon: Tag,
   },
   {
     id: "settings",
@@ -76,8 +82,8 @@ export default function AdminDashboard() {
       ])
 
       console.log('Products API response:', productsRes)
-    console.log('Orders API response:', ordersRes)
-    console.log('Users API response:', usersRes)
+      console.log('Orders API response:', ordersRes)
+      console.log('Users API response:', usersRes)
       
       // Process sales data for the chart (last 6 months)
       const salesData = processSalesData(ordersRes.orders)
@@ -186,6 +192,7 @@ export default function AdminDashboard() {
           {activeTab === "products" && <AdminProducts />}
           {activeTab === "orders" && <AdminOrders />}
           {activeTab === "customers" && <AdminCustomers />}
+          {activeTab === "promotions" && <AdminPromotions />}
           {activeTab === "settings" && <AdminSettings />}
         </div>
       </div>

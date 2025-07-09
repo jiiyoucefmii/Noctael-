@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import AdminDashboard from "@/components/admin/dashboard"
+import RequireAdmin from "./RequireAdmin"
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | Noctael",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 }
 
 export default function AdminPage() {
-  return <AdminDashboard />
+  return (
+    <RequireAdmin>
+      <AdminDashboard />
+    </RequireAdmin>
+  )
 }

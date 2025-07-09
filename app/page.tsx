@@ -12,7 +12,7 @@ export default function Home() {
     <main className="flex-1">
       {/* Hero Section */}
       <section className="relative h-[80vh] bg-black">
-        <div className="absolute inset-0 bg-[url('/images/hero-bg.jpg')] bg-cover bg-center opacity-60" />
+        <div className="absolute inset-0 bg-[url('/hero.jpg')] bg-cover bg-center opacity-60" />
         <div className="relative flex h-full flex-col items-center justify-center px-4 text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="mb-4 text-5xl font-bold tracking-tight text-white sm:text-6xl md:text-7xl">NOCTAEL</h1>

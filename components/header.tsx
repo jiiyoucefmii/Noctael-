@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useCart } from "@/hooks/use-cart"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -24,6 +25,7 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const pathname = usePathname()
   const { items } = useCart()
+  const { isAuthenticated } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,6 +79,16 @@ export default function Header() {
               </div>
               <div className="border-t py-4">
                 <div className="flex flex-col space-y-2">
+                  {!isAuthenticated && (
+                    <>
+                      <Link href="/auth/login" className="block py-2 text-lg">
+                        Login
+                      </Link>
+                      <Link href="/auth/register" className="block py-2 text-lg">
+                        Register
+                      </Link>
+                    </>
+                  )}
                   <Link href="/account" className="flex items-center py-2">
                     <User className="mr-2 h-5 w-5" />
                     My Account
@@ -137,6 +149,24 @@ export default function Header() {
               <span className="sr-only">Search</span>
             </Button>
           )}
+          
+          <div className="hidden lg:flex space-x-2">
+            {!isAuthenticated && (
+              <>
+                <Link href="/auth/login">
+                  <Button variant="outline" size="sm">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/auth/register">
+                  <Button variant="default" size="sm">
+                    Register
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
+          
           <Link href="/account">
             <Button variant="ghost" size="icon">
               <User className="h-5 w-5" />

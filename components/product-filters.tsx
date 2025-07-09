@@ -1,20 +1,14 @@
 "use client"
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { useCallback } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { getCategories } from "@/utils/api/categories" // Import the API function
+import { Category } from "@/utils/api/categories" // Import the Category type
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-
-const categories = [
-  { id: "t-shirts", name: "T-Shirts" },
-  { id: "hoodies", name: "Hoodies" },
-  { id: "pants", name: "Pants" },
-  { id: "jackets", name: "Jackets" },
-  { id: "accessories", name: "Accessories" },
-]
 
 const genders = [
   { id: "men", name: "Men" },
@@ -25,30 +19,72 @@ const genders = [
 export default function ProductFilters() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const createQueryString = useCallback(
-    (name: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString())
-
-      if (value) {
-        params.set(name, value)
-      } else {
-        params.delete(name)
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true)
+        const data = await getCategories()
+        setCategories(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch categories')
+      } finally {
+        setLoading(false)
       }
+    }
 
-      return params.toString()
-    },
-    [searchParams],
-  )
+    fetchCategories()
+  }, [])
+
+  // Get current filters as arrays
+  const currentCategories = searchParams?.getAll('category') || []
+  const currentGenders = searchParams?.getAll('gender') || []
+  const isNew = searchParams?.has('new')
+  const isOnSale = searchParams?.has('sale')
 
   const toggleFilter = (name: string, value: string) => {
-    const current = searchParams.get(name)
-    const newValue = current === value ? "" : value
-    router.push(`/products?${createQueryString(name, newValue)}`)
+    const params = new URLSearchParams(searchParams?.toString())
+    const currentValues = params.getAll(name)
+    
+    if (currentValues.includes(value)) {
+      // Remove the value if already present
+      const newValues = currentValues.filter(v => v !== value)
+      params.delete(name)
+      newValues.forEach(v => params.append(name, v))
+    } else {
+      // Add the value if not present
+      params.append(name, value)
+    }
+    
+    router.push(`/products?${params.toString()}`, { scroll: false })
+  }
+
+  const toggleSpecialFilter = (name: string) => {
+    const params = new URLSearchParams(searchParams?.toString())
+    
+    if (params.has(name)) {
+      params.delete(name)
+    } else {
+      params.set(name, 'true')
+    }
+    
+    router.push(`/products?${params.toString()}`, { scroll: false })
   }
 
   const clearFilters = () => {
-    router.push("/products")
+    router.push("/products", { scroll: false })
+  }
+
+  if (loading) {
+    return <div className="space-y-6">Loading categories...</div>
+  }
+
+  if (error) {
+    return <div className="space-y-6 text-red-500">{error}</div>
   }
 
   return (
@@ -64,11 +100,11 @@ export default function ProductFilters() {
           <AccordionTrigger>Category</AccordionTrigger>
           <AccordionContent>
             <div className="space-y-2">
-              {categories.map((category) => (
+              {categories.categories.map((category) => (
                 <div key={category.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`category-${category.id}`}
-                    checked={searchParams.get("category") === category.id}
+                    checked={currentCategories.includes(category.id)}
                     onCheckedChange={() => toggleFilter("category", category.id)}
                   />
                   <Label htmlFor={`category-${category.id}`} className="text-sm font-normal">
@@ -87,7 +123,7 @@ export default function ProductFilters() {
                 <div key={gender.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`gender-${gender.id}`}
-                    checked={searchParams.get("gender") === gender.id}
+                    checked={currentGenders.includes(gender.id)}
                     onCheckedChange={() => toggleFilter("gender", gender.id)}
                   />
                   <Label htmlFor={`gender-${gender.id}`} className="text-sm font-normal">
@@ -105,8 +141,8 @@ export default function ProductFilters() {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="new"
-                  checked={searchParams.get("new") === "true"}
-                  onCheckedChange={() => toggleFilter("new", "true")}
+                  checked={isNew}
+                  onCheckedChange={() => toggleSpecialFilter("new")}
                 />
                 <Label htmlFor="new" className="text-sm font-normal">
                   New Arrivals
@@ -115,8 +151,8 @@ export default function ProductFilters() {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="sale"
-                  checked={searchParams.get("sale") === "true"}
-                  onCheckedChange={() => toggleFilter("sale", "true")}
+                  checked={isOnSale}
+                  onCheckedChange={() => toggleSpecialFilter("sale")}
                 />
                 <Label htmlFor="sale" className="text-sm font-normal">
                   On Sale

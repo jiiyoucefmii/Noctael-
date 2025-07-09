@@ -121,10 +121,20 @@ export async function deleteProductVariant(variantId: string) {
 
 // --- Additional Product Routes ---
 
+
 export async function getFeaturedProducts(): Promise<Product[]> {
   const res = await axiosInstance.get<ProductsResponse>('/products/featured');
   return res.data.products;
 }
+
+export async function getFeaturedProductsWithLimit(limit: number): Promise<Product[]> {
+  if (isNaN(limit) || limit <= 0) {
+    throw new Error('Limit must be a positive number');
+  }
+  const res = await axiosInstance.get<ProductsResponse>(`/products/featured/${limit}`);
+  return res.data.products;
+}
+
 
 export async function getNewProducts(): Promise<Product[]> {
   const res = await axiosInstance.get<ProductsResponse>('/products/new');

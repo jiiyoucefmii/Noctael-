@@ -4,17 +4,17 @@ import type { Metadata } from "next"
 import ProductList from "@/components/product-list"
 import ProductFilters from "@/components/product-filters"
 import ProductSkeleton from "@/components/product-skeleton"
+import { getProducts } from "@/utils/api/products"
 
 export const metadata: Metadata = {
   title: "Products | Noctael",
   description: "Browse our collection of premium clothing.",
 }
 
-export default function ProductsPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+export default async function ProductsPage() {
+  // Fetch all products at build time or on server
+  const allProducts = await getProducts()
+
   return (
     <main className="flex-1 py-10">
       <div className="container mx-auto px-4">
@@ -25,7 +25,7 @@ export default function ProductsPage({
           </div>
           <div>
             <Suspense fallback={<ProductSkeleton />}>
-              <ProductList searchParams={searchParams} />
+              <ProductList allProducts={allProducts} />
             </Suspense>
           </div>
         </div>

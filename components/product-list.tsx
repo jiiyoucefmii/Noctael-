@@ -1,34 +1,70 @@
-import { getProducts } from "@/lib/products"
+"use client"
+
+import { useSearchParams } from "next/navigation"
+import { useMemo } from "react"
 import ProductCard from "@/components/product-card"
 import ProductSort from "@/components/product-sort"
+import type { Product } from "@/utils/api/products"
 
-export default async function ProductList({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
-  const category = searchParams.category as string | undefined
-  const gender = searchParams.gender as "men" | "women" | "unisex" | undefined
-  const isNew = searchParams.new === "true"
-  const isOnSale = searchParams.sale === "true"
-  const sort = searchParams.sort as string | undefined
+export default function ProductList({ allProducts }: { allProducts: Product[] }) {
+  const searchParams = useSearchParams()
 
-  const products = await getProducts({
-    category,
-    gender,
-    new: isNew,
-    sale: isOnSale,
-  })
+  // Get all filter params from URL as arrays
+  const categories = searchParams?.getAll('category') || []
+  const genders = searchParams?.getAll('gender') || []
+  const isNew = searchParams?.has('new')
+  const isOnSale = searchParams?.has('sale')
+  const sort = searchParams?.get('sort')
 
-  // Sort products
-  let sortedProducts = [...products]
-  if (sort === "price-asc") {
-    sortedProducts.sort((a, b) => a.price - b.price)
-  } else if (sort === "price-desc") {
-    sortedProducts.sort((a, b) => b.price - a.price)
-  } else if (sort === "newest") {
-    sortedProducts = sortedProducts.filter((p) => p.isNew).concat(sortedProducts.filter((p) => !p.isNew))
-  }
+  // Filter products client-side
+  const filteredProducts = useMemo(() => {
+    let result = [...allProducts]
+
+    // Apply category filters (OR within category)
+    if (categories.length > 0) {
+      result = result.filter(product => categories.includes(product.category_id))
+    }
+
+    // Apply gender filters (OR within gender)
+    if (genders.length > 0) {
+      result = result.filter(product => genders.includes(product.gender))
+    }
+
+    // Apply special filters (AND between different attributes)
+    if (isNew) {
+      result = result.filter(product => product.is_new)
+    }
+    if (isOnSale) {
+      result = result.filter(product => product.is_on_sale)
+    }
+
+    return result
+  }, [allProducts, categories, genders, isNew, isOnSale])
+
+  // Sort products (unchanged)
+  const sortedProducts = useMemo(() => {
+    const products = [...filteredProducts]
+    
+    if (sort === "price-asc") {
+      products.sort((a, b) => {
+        const priceA = a.variants?.[0]?.price || 0
+        const priceB = b.variants?.[0]?.price || 0
+        return priceA - priceB
+      })
+    } else if (sort === "price-desc") {
+      products.sort((a, b) => {
+        const priceA = a.variants?.[0]?.price || 0
+        const priceB = b.variants?.[0]?.price || 0
+        return priceB - priceA
+      })
+    } else if (sort === "newest") {
+      products.sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      })
+    }
+
+    return products
+  }, [filteredProducts, sort])
 
   return (
     <div>

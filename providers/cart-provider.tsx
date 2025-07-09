@@ -1,113 +1,204 @@
 "use client"
 
-import type React from "react"
-
 import { createContext, useContext, useState, useEffect } from "react"
 import type { Product } from "@/utils/api/products"
-import type { CartItem } from "@/utils/api/cart"
+import { 
+  getCart as apiGetCart,
+  addToCart as apiAddToCart,
+  updateCartItem as apiUpdateCartItem,
+  removeFromCart as apiRemoveFromCart,
+  clearCart as apiClearCart,
+  transferGuestCart,
+  type CartItem as ApiCartItem,
+  type Cart as ApiCart
+} from "@/utils/api/cart"
+
+interface LocalCartItem extends Product {
+  quantity: number
+  size?: string
+  variant_id?: string
+}
 
 interface CartContextType {
-  items: CartItem[]
-  addToCart: (product: Product, quantity?: number, size?: string) => void
-  removeFromCart: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
-  clearCart: () => void
+  items: LocalCartItem[]
+  addToCart: (product: Product, quantity?: number, size?: string, variant_id?: string) => Promise<void>
+  removeFromCart: (itemId: string) => Promise<void>
+  updateQuantity: (itemId: string, quantity: number) => Promise<void>
+  clearCart: () => Promise<void>
+  syncCart: () => Promise<void>
   subtotal: number
-
-
   shipping: number
   total: number
+  isLoading: boolean
 }
 
 export const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([])
+  const [localItems, setLocalItems] = useState<LocalCartItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Load cart from localStorage on client-side
-  useEffect(() => {
-    const savedCart = localStorage.getItem("cart")
-    if (savedCart) {
-      try {
-        setItems(JSON.parse(savedCart))
-      } catch (error) {
-        console.error("Failed to parse cart from localStorage:", error)
+  // Convert API cart items to local format
+  const apiToLocalItem = (apiItem: ApiCartItem): LocalCartItem => ({
+    id: apiItem.product_id,
+    variant_id: apiItem.variant_id,
+    name: apiItem.name,
+    price: apiItem.price,
+    quantity: apiItem.quantity,
+    size: apiItem.size,
+    color: apiItem.color,
+    main_image: apiItem.image || '',
+    // Add other product fields as needed
+  })
+
+  // Load cart from API on mount
+  const loadCart = async () => {
+    try {
+      setIsLoading(true)
+      const apiCart = await apiGetCart()
+      setLocalItems(apiCart.items.map(apiToLocalItem))
+    } catch (error) {
+      console.error("Failed to load cart:", error)
+      // Fallback to localStorage if API fails
+      const savedCart = localStorage.getItem("cart")
+      if (savedCart) {
+        try {
+          setLocalItems(JSON.parse(savedCart))
+        } catch (e) {
+          console.error("Failed to parse local cart:", e)
+        }
       }
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  useEffect(() => {
+    loadCart()
   }, [])
 
-  // Save cart to localStorage whenever it changes
+  // Save local items to localStorage as backup
   useEffect(() => {
-    if (items.length > 0) {
-      localStorage.setItem("cart", JSON.stringify(items))
+    if (!isLoading && localItems.length > 0) {
+      localStorage.setItem("cart", JSON.stringify(localItems))
     }
-  }, [items])
+  }, [localItems, isLoading])
 
-  const addToCart = (product: Product, quantity = 1, size?: string) => {
-    setItems((prevItems) => {
-      const existingItemIndex = prevItems.findIndex((item) => item.id === product.id && item.size === size)
-
-      if (existingItemIndex > -1) {
-        // Update quantity if item already exists
-        const updatedItems = [...prevItems]
-        updatedItems[existingItemIndex].quantity += quantity
-        return updatedItems
-      } else {
-        // Add new item
-        return [
-          ...prevItems,
-          {
-            ...product,
-            quantity,
-            size,
-            variant_id: product.variant_id || "", // Ensure required fields are provided
-            product_id: product.product_id || "",
-            price: product.price || 0,
-            item_total: (product.price || 0) * quantity,
-          },
-        ]
-      }
-    })
+  const addToCart = async (product: Product, quantity = 1, size?: string, variant_id?: string) => {
+    // If variant_id wasn't provided, try to get it from product
+    if (!variant_id && product.variants?.[0]?.id) {
+      variant_id = product.variants[0].id
+    }
+  
+    if (!variant_id) {
+      throw new Error("Variant ID is required - no variant available for this product")
+    }
+  
+    try {
+      setIsLoading(true)
+      const { cart_item } = await apiAddToCart(variant_id, quantity)
+      
+      setLocalItems(prev => {
+        const existing = prev.find(item => 
+          item.variant_id === variant_id && 
+          item.size === size
+        )
+  
+        if (existing) {
+          return prev.map(item => 
+            item.variant_id === variant_id && item.size === size
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          )
+        }
+  
+        return [...prev, {
+          ...product,
+          variant_id,
+          quantity,
+          size,
+          // Ensure we have all required fields
+          price: product.variants?.find(v => v.id === variant_id)?.price || product.price,
+          main_image: product.main_image || product.variants?.find(v => v.id === variant_id)?.images?.[0]?.image_url || ''
+        }]
+      })
+    } catch (error) {
+      console.error("Failed to add to cart:", error)
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const removeFromCart = (productId: string) => {
-    setItems((prevItems) => prevItems.filter((item) => item.id !== productId))
-
-    // If cart is empty after removal, clear localStorage
-    if (items.length === 1) {
-      localStorage.removeItem("cart")
+  const removeFromCart = async (itemId: string) => {
+    try {
+      setIsLoading(true)
+      await apiRemoveFromCart(itemId)
+      setLocalItems(prev => prev.filter(item => item.id !== itemId))
+    } catch (error) {
+      console.error("Failed to remove item:", error)
+      throw error
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = async (itemId: string, quantity: number) => {
     if (quantity < 1) return
 
-    setItems((prevItems) => prevItems.map((item) => (item.id === productId ? { ...item, quantity } : item)))
+    try {
+      setIsLoading(true)
+      await apiUpdateCartItem(itemId, quantity)
+      setLocalItems(prev => 
+        prev.map(item => 
+          item.id === itemId ? { ...item, quantity } : item
+        )
+      )
+    } catch (error) {
+      console.error("Failed to update quantity:", error)
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const clearCart = () => {
-    setItems([])
-    localStorage.removeItem("cart")
+  const clearCart = async () => {
+    try {
+      setIsLoading(true)
+      await apiClearCart()
+      setLocalItems([])
+      localStorage.removeItem("cart")
+    } catch (error) {
+      console.error("Failed to clear cart:", error)
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Manual sync with API
+  const syncCart = async () => {
+    await loadCart()
   }
 
   // Calculate totals
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-
-  const shipping = subtotal > 100 ? 0 : 10 // Free shipping over $100
+  const subtotal = localItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const shipping = subtotal > 100 ? 0 : 10
   const total = subtotal + shipping
-
 
   return (
     <CartContext.Provider
       value={{
-        items,
+        items: localItems,
         addToCart,
         removeFromCart,
         updateQuantity,
         clearCart,
+        syncCart,
         subtotal,
         shipping,
         total,
+        isLoading
       }}
     >
       {children}
