@@ -2,8 +2,7 @@
 
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-
+const API_URL = 'https://noctael.onrender.com';
 export interface ProductVariant {
   id?: string;
   product_id?: string;
@@ -123,11 +122,13 @@ export async function deleteProductVariant(variantId: string) {
 
 
 export async function getFeaturedProducts(): Promise<Product[]> {
+  
   const res = await axiosInstance.get<ProductsResponse>('/products/featured');
   return res.data.products;
 }
 
 export async function getFeaturedProductsWithLimit(limit: number): Promise<Product[]> {
+  console.log(API_URL)
   if (isNaN(limit) || limit <= 0) {
     throw new Error('Limit must be a positive number');
   }

@@ -4,11 +4,11 @@ import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Menu, Search, ShoppingBag, User, X } from "lucide-react"
 
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
-import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet"
-import { useCart } from "../hooks/use-cart"
-import { cn } from "../lib/utils"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Sheet, SheetContent, SheetTrigger } from "../../components/ui/sheet"
+import { useCart } from "../../hooks/use-cart"
+import { cn } from "../../lib/utils"
 
 const navigation = [
   { name: "Home", href: "/" },
