@@ -76,15 +76,15 @@ export default function AccountOrders() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="font-medium">Order #{order.id}</p>
-                    <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-500">{new Date(order.created_at).toLocaleDateString()}</p>
                   </div>
                   <div>{getStatusBadge(order.status)}</div>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm text-gray-500">{order.items?.length ?? 0} items</p>
-                    <p className="font-medium">${order.total.toFixed(2)}</p>
-                  </div>
+                    <p className="font-medium">{Number(order.total)}</p>
+                    </div>
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/account/orders/${order.id}`}>View Details</Link>
                   </Button>

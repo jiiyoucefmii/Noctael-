@@ -111,8 +111,8 @@ export default function OrderSummary() {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span>Subtotal</span>
-            <span>${cart.subtotal.toFixed(2)}</span>
-          </div>
+            <span>{Number(cart.subtotal).toFixed(2)}</span>
+            </div>
           <div className="flex justify-between">
             <span>Shipping</span>
             <span>{cart.subtotal > 100 ? "Free" : "$10.00"}</span>
@@ -121,7 +121,9 @@ export default function OrderSummary() {
         <Separator />
         <div className="flex justify-between font-medium">
           <span>Total</span>
-          <span>${(cart.subtotal + (cart.subtotal > 100 ? 0 : 10)).toFixed(2)}</span>
+          <span>
+  ${Number(cart.subtotal + (Number(cart.subtotal) > 100 ? 0 : 10)).toFixed(2)}
+</span>
         </div>
       </CardContent>
       <CardFooter className="text-sm text-gray-500">

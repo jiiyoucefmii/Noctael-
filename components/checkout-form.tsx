@@ -9,15 +9,24 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
-import { useCart } from "@/hooks/use-cart"
 import { getCurrentUser } from "@/utils/api/users"
 import { getUserAddresses, Address } from "@/utils/api/addresses"
+import { createOrder } from "@/utils/api/orders"
+import { getCart, clearCart, Cart } from "@/utils/api/cart"
+import Link from "next/link"
+
+export interface CheckoutData {
+  user_id: string;
+  shipping_address_id: string;
+  cart_id: string;
+}
 
 export default function CheckoutForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [addresses, setAddresses] = useState<Address[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string>("")
+  const [cart, setCart] = useState<Cart | null>(null)
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -31,15 +40,31 @@ export default function CheckoutForm() {
   })
   const router = useRouter()
   const { toast } = useToast()
-  const { clearCart } = useCart()
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       try {
-        const userData = await getCurrentUser()
-        setUser(userData)
+        setIsLoading(true)
+        const [userData, cartData] = await Promise.all([
+          getCurrentUser(),
+          getCart()
+        ])
+        console.log(userData)
+        console.log(cartData)
         
-        // Prefill user info if logged in
+        setUser(userData)
+        setCart(cartData)
+
+        if (!cartData?.items?.length) {
+          toast({
+            title: "Your cart is empty",
+            description: "Please add items to your cart before checkout",
+            variant: "destructive"
+          })
+          router.push('/cart')
+          return
+        }
+
         if (userData) {
           setFormData(prev => ({
             ...prev,
@@ -49,11 +74,9 @@ export default function CheckoutForm() {
             phone: userData.phone_number || ""
           }))
           
-          // Fetch user addresses
           const userAddresses = await getUserAddresses()
           setAddresses(userAddresses.addresses || [])
           
-          // Set default address if exists
           const defaultAddress = userAddresses.addresses.find((addr: Address) => addr.is_default)
           if (defaultAddress) {
             setSelectedAddressId(defaultAddress.id || "")
@@ -67,11 +90,18 @@ export default function CheckoutForm() {
           }
         }
       } catch (error) {
-        console.error("Error fetching user data:", error)
+        console.error("Error fetching data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load checkout data",
+          variant: "destructive"
+        })
+      } finally {
+        setIsLoading(false)
       }
     }
     
-    fetchUserData()
+    fetchData()
   }, [])
 
   const handleAddressChange = (addressId: string) => {
@@ -97,31 +127,51 @@ export default function CheckoutForm() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
+    e.preventDefault();
+    
+    console.log("Cart ID being sent to backend:", cart?.cart_id);
+  
+    if (!cart?.items?.length) {
+      toast({
+        title: "Your cart is empty",
+        description: "Please add items to your cart before checkout",
+        variant: "destructive"
+      });
+      router.push('/cart');
+      return;
+    }
+  
+    setIsLoading(true);
+  
     try {
-      // Here you would typically send the order to your backend
-      // For now, we'll simulate it
-      setTimeout(() => {
-        setIsLoading(false)
-        clearCart()
-        toast({
-          title: "Order placed successfully!",
-          description: "Thank you for your purchase.",
-        })
-        router.push("/order-confirmation")
-      }, 2000)
-    } catch (error) {
-      setIsLoading(false)
+      const orderData: CheckoutData = {
+        user_id: user.id,
+        shipping_address_id: selectedAddressId,
+        cart_id: cart.cart_id
+      };
+  
+      const response = await createOrder(orderData);
+      
+      // The backend already clears the cart, so we just need to update local state
+      setCart(null); // Clear local cart state
+      
+      toast({
+        title: "Order placed successfully!",
+        description: `Your order #${response.order.id} has been received.`,
+      });
+      
+      router.push(`/order-confirmation?orderId=${response.order.id}`);
+    } catch (error: any) {
+      console.error("Order creation failed:", error);
       toast({
         title: "Error",
-        description: "There was an error processing your order.",
+        description: error.message || "There was an error processing your order.",
         variant: "destructive"
-      })
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }
-
+  };
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-8">
@@ -140,6 +190,7 @@ export default function CheckoutForm() {
                   value={formData.firstName} 
                   onChange={handleInputChange} 
                   required 
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -149,6 +200,7 @@ export default function CheckoutForm() {
                   value={formData.lastName} 
                   onChange={handleInputChange} 
                   required 
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -160,6 +212,7 @@ export default function CheckoutForm() {
                 value={formData.email} 
                 onChange={handleInputChange} 
                 required 
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -170,6 +223,7 @@ export default function CheckoutForm() {
                 value={formData.phone} 
                 onChange={handleInputChange} 
                 required 
+                disabled={isLoading}
               />
             </div>
           </CardContent>
@@ -185,7 +239,11 @@ export default function CheckoutForm() {
             {user && addresses.length > 0 && (
               <div className="space-y-2">
                 <Label>Saved Addresses</Label>
-                <Select value={selectedAddressId} onValueChange={handleAddressChange}>
+                <Select 
+                  value={selectedAddressId} 
+                  onValueChange={handleAddressChange}
+                  disabled={isLoading}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a saved address" />
                   </SelectTrigger>
@@ -207,6 +265,7 @@ export default function CheckoutForm() {
                 value={formData.address} 
                 onChange={handleInputChange} 
                 required 
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -215,6 +274,7 @@ export default function CheckoutForm() {
                 id="address2" 
                 value={formData.address2} 
                 onChange={handleInputChange} 
+                disabled={isLoading}
               />
             </div>
 
@@ -226,6 +286,7 @@ export default function CheckoutForm() {
                   value={formData.city} 
                   onChange={handleInputChange} 
                   required 
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -235,6 +296,7 @@ export default function CheckoutForm() {
                   value={formData.state} 
                   onChange={handleInputChange} 
                   required 
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -244,6 +306,7 @@ export default function CheckoutForm() {
                   value={formData.zip} 
                   onChange={handleInputChange} 
                   required 
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -251,14 +314,18 @@ export default function CheckoutForm() {
         </Card>
 
         <CardFooter>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading || !cart?.items?.length || !selectedAddressId}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Processing...
               </>
             ) : (
-              "Place Order"
+              `Place Order (${cart?.items?.length || 0} items)`
             )}
           </Button>
         </CardFooter>

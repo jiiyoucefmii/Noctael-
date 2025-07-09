@@ -1,15 +1,68 @@
-import { Link } from "react-router-dom"
-import { CheckCircle, Package, ShoppingBag } from "lucide-react"
+"use client"
 
-import { Button } from "../../components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card"
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { CheckCircle, Loader2, Package, ShoppingBag } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { getOrderById } from "@/utils/api/orders"
+import Link from "next/link"
+import { useToast } from "@/hooks/use-toast"
+import { format } from "date-fns"
 
+export default function OrderConfirmation() {
+  const searchParams = useSearchParams()
+  const orderId = searchParams?.get('orderId')
+  const [order, setOrder] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
 
-export default function OrderConfirmationPage() {
-  // Generate a random order number
-  const orderNumber = `NOC${Math.floor(Math.random() * 10000)
-    .toString()
-    .padStart(4, "0")}`
+  useEffect(() => {
+    if (orderId) {
+      const fetchOrder = async () => {
+        try {
+          const response = await getOrderById(orderId)
+          setOrder(response.order)
+        } catch (error: any) {
+          console.error('Failed to fetch order:', error)
+          toast({
+            title: "Error",
+            description: error.message || "Failed to load order details",
+            variant: "destructive"
+          })
+        } finally {
+          setLoading(false)
+        }
+      }
+      fetchOrder()
+    } else {
+      setLoading(false)
+    }
+  }, [orderId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p>Loading order details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!order) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <Package className="h-12 w-12 text-gray-400" />
+        <h2 className="text-xl font-semibold">Order not found</h2>
+        <p className="text-gray-500">We couldn't find the order you're looking for</p>
+        <Button asChild>
+          <Link href="/">Continue Shopping</Link>
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="py-10">
@@ -22,8 +75,12 @@ export default function OrderConfirmationPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Order #{orderNumber}</CardTitle>
-            <CardDescription>Placed on {new Date().toLocaleDateString()}</CardDescription>
+            <CardTitle>Order #{order.id}</CardTitle>
+            <CardDescription>
+              Placed on {format(new Date(order.created_at), 'MMMM d, yyyy')}
+              <br />
+              Status: <span className="capitalize">{order.status}</span>
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="rounded-lg bg-gray-50 p-4">
@@ -32,36 +89,81 @@ export default function OrderConfirmationPage() {
                 <span className="font-medium">Shipping Update</span>
               </div>
               <p className="mt-2 text-sm text-gray-600">
-                You will receive an email with tracking information once your order ships.
+                {order.status === 'pending' 
+                  ? "Your order is being processed. You will receive an email with tracking information once it ships."
+                  : "Your order has been accepted and will ship soon."}
               </p>
             </div>
 
             <div>
               <h3 className="mb-2 font-medium">Shipping Address</h3>
               <p className="text-sm text-gray-600">
-                John Doe
+                {order.shipping_address.name && <>{order.shipping_address.name}<br /></>}
+                {order.shipping_address.address}
+                {order.shipping_address.address2 && <>, {order.shipping_address.address2}</>}
                 <br />
-                123 Main Street
+                {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.zip}
                 <br />
-                Apt 4B
-                <br />
-                New York, NY 10001
-                <br />
-                United States
+                {order.shipping_address.country}
               </p>
             </div>
 
             <div>
-              <h3 className="mb-2 font-medium">Payment Method</h3>
-              <p className="text-sm text-gray-600">Credit Card ending in 1234</p>
+              <h3 className="mb-2 font-medium">Order Summary</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>${order.subtotal.toFixed(2)}</span>
+                </div>
+                {order.discount_amount && (
+                  <div className="flex justify-between">
+                    <span>Discount:</span>
+                    <span>-${order.discount_amount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-medium">
+                  <span>Total:</span>
+                  <span>${order.total.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="mb-2 font-medium">Items Ordered</h3>
+              <div className="space-y-4">
+                {order.items.map((item: any) => (
+                  <div key={item.id} className="flex items-center gap-4">
+                    <div className="h-16 w-16 rounded-md bg-gray-100 overflow-hidden">
+                      {item.product_image && (
+                        <img 
+                          src={item.product_image} 
+                          alt={item.product_name}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{item.product_name}</p>
+                      <p className="text-sm text-gray-600">
+                        {item.product_color && `${item.product_color} • `}
+                        {item.product_size && `${item.product_size} • `}
+                        Qty: {item.quantity}
+                      </p>
+                    </div>
+                    <div className="font-medium">
+                      ${item.price.toFixed(2)}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button asChild className="w-full">
-              <Link to="/account">View Order Status</Link>
+              <Link href={`/account/orders/${order.id}`}>View Order Details</Link>
             </Button>
-            <Button asChild variant="outline" className="w-full bg-transparent">
-              <Link to="/products">
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/products">
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 Continue Shopping
               </Link>
@@ -72,8 +174,8 @@ export default function OrderConfirmationPage() {
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
             Need help? Contact our customer support at{" "}
-            <Link to="/contact" className="text-black underline">
-              support@noctael.com
+            <Link href="/contact" className="text-black underline">
+              support@example.com
             </Link>
           </p>
         </div>
