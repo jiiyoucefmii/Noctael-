@@ -10,52 +10,67 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { getCurrentUser } from "@/utils/api/users"
-import { getUserAddresses, Address } from "@/utils/api/addresses"
+import { getUserAddresses, Address, createAddress } from "@/utils/api/addresses"
 import { createOrder } from "@/utils/api/orders"
-import { getCart, clearCart, Cart } from "@/utils/api/cart"
-import Link from "next/link"
+import { useCart } from "@/hooks/use-cart"
 
 export interface CheckoutData {
   user_id: string;
   shipping_address_id: string;
   cart_id: string;
+  discount_code?: string;
+  discount_amount?: number;
+  subtotal: number;
+  total: number;
 }
 
 export default function CheckoutForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
-  const [addresses, setAddresses] = useState<Address[]>([])
+  const [allAddresses, setAllAddresses] = useState<Address[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string>("")
-  const [cart, setCart] = useState<Cart | null>(null)
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
     address: "",
-    address2: "",
     city: "",
     state: "",
-    zip: ""
+    zip: "",
+    country: "Algeria" // Fixed to Algeria
   })
   const router = useRouter()
   const { toast } = useToast()
+  const { 
+    items, 
+    cart_id, 
+    discount,
+    subtotal, // <-- make sure you get this from cart context, and it's updated after promo
+    total,    // <-- same as above
+    clearCart,
+    isLoading: isCartLoading 
+  } = useCart()
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true)
-        const [userData, cartData] = await Promise.all([
-          getCurrentUser(),
-          getCart()
-        ])
-        console.log(userData)
-        console.log(cartData)
+        const userData = await getCurrentUser()
         
-        setUser(userData)
-        setCart(cartData)
+        if (!userData) {
+          toast({
+            title: "Authentication required",
+            description: "Please sign in to proceed with checkout",
+            variant: "destructive"
+          })
+          router.push('/login')
+          return
+        }
 
-        if (!cartData?.items?.length) {
+        setUser(userData)
+
+        if (!items.length) {
           toast({
             title: "Your cart is empty",
             description: "Please add items to your cart before checkout",
@@ -65,29 +80,27 @@ export default function CheckoutForm() {
           return
         }
 
-        if (userData) {
+        setFormData(prev => ({
+          ...prev,
+          firstName: userData.first_name || "",
+          lastName: userData.last_name || "",
+          email: userData.email || "",
+          phone: userData.phone_number || ""
+        }))
+        
+        const userAddresses = await getUserAddresses()
+        setAllAddresses(userAddresses.addresses || [])
+        
+        const defaultAddress = userAddresses.addresses.find((addr: Address) => addr.is_default)
+        if (defaultAddress) {
+          setSelectedAddressId(defaultAddress.id || "")
           setFormData(prev => ({
             ...prev,
-            firstName: userData.first_name || "",
-            lastName: userData.last_name || "",
-            email: userData.email || "",
-            phone: userData.phone_number || ""
+            address: defaultAddress.address || "",
+            city: defaultAddress.city || "",
+            state: defaultAddress.state || "",
+            zip: defaultAddress.zip || "",
           }))
-          
-          const userAddresses = await getUserAddresses()
-          setAddresses(userAddresses.addresses || [])
-          
-          const defaultAddress = userAddresses.addresses.find((addr: Address) => addr.is_default)
-          if (defaultAddress) {
-            setSelectedAddressId(defaultAddress.id || "")
-            setFormData(prev => ({
-              ...prev,
-              address: defaultAddress.address || "",
-              city: defaultAddress.city || "",
-              state: defaultAddress.state || "",
-              zip: defaultAddress.zip || ""
-            }))
-          }
         }
       } catch (error) {
         console.error("Error fetching data:", error)
@@ -102,18 +115,18 @@ export default function CheckoutForm() {
     }
     
     fetchData()
-  }, [])
+  }, [items, router, toast])
 
   const handleAddressChange = (addressId: string) => {
     setSelectedAddressId(addressId)
-    const selectedAddress = addresses.find(addr => addr.id === addressId)
+    const selectedAddress = allAddresses.find(addr => addr.id === addressId)
     if (selectedAddress) {
       setFormData(prev => ({
         ...prev,
         address: selectedAddress.address || "",
         city: selectedAddress.city || "",
         state: selectedAddress.state || "",
-        zip: selectedAddress.zip || ""
+        zip: selectedAddress.zip || "",
       }))
     }
   }
@@ -126,34 +139,109 @@ export default function CheckoutForm() {
     }))
   }
 
+  const findExistingAddress = (): string | null => {
+    const { address, city, state, zip } = formData;
+    const found = allAddresses.find(addr => 
+      addr.address === address &&
+      addr.city === city &&
+      addr.state === state &&
+      addr.zip === zip
+    );
+    return found ? found.id : null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log("Cart ID being sent to backend:", cart?.cart_id);
   
-    if (!cart?.items?.length) {
+    if (!items.length) {
       toast({
         title: "Your cart is empty",
         description: "Please add items to your cart before checkout",
         variant: "destructive"
       });
-      router.push('/cart');
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to proceed with checkout",
+        variant: "destructive"
+      });
+      router.push('/login');
+      return;
+    }
+
+    if (!cart_id) {
+      toast({
+        title: "Invalid cart session",
+        description: "Your cart could not be found. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.address) {
+      toast({
+        title: "Shipping address required",
+        description: "Please enter a shipping address",
+        variant: "destructive"
+      });
       return;
     }
   
     setIsLoading(true);
   
     try {
+      // First check if we have a selected address
+      let addressId = selectedAddressId;
+
+      // If no selected address, check if the entered address matches an existing one
+      if (!addressId) {
+        const existingAddressId = findExistingAddress();
+        if (existingAddressId) {
+          addressId = existingAddressId;
+          toast({
+            title: "Using existing address",
+            description: "We found a matching address in your saved addresses",
+          });
+        }
+      }
+
+      // If still no address ID, create a new one
+      if (!addressId) {
+        const addressPayload = {
+          name: `${formData.firstName} ${formData.lastName}`,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zip: formData.zip,
+          country: formData.country,
+          is_default: false
+        };
+
+        const { address } = await createAddress(addressPayload);
+        addressId = address.id;
+        setAllAddresses(prev => [...prev, address]);
+        
+        toast({
+          title: "New address saved",
+          description: "Your new address has been added to your account",
+        });
+      }
+
       const orderData: CheckoutData = {
         user_id: user.id,
-        shipping_address_id: selectedAddressId,
-        cart_id: cart.cart_id
+        shipping_address_id: addressId,
+        cart_id: cart_id,
+        discount_code: discount?.code, 
+        discount_amount: discount?.amount,
+        subtotal,
+        total,
       };
   
       const response = await createOrder(orderData);
       
-      // The backend already clears the cart, so we just need to update local state
-      setCart(null); // Clear local cart state
       
       toast({
         title: "Order placed successfully!",
@@ -163,19 +251,27 @@ export default function CheckoutForm() {
       router.push(`/order-confirmation?orderId=${response.order.id}`);
     } catch (error: any) {
       console.error("Order creation failed:", error);
+      
+      let errorMessage = "There was an error processing your order. Please try again.";
+      if (error.message.includes("Cart not found")) {
+        errorMessage = "Your cart session expired. Please add items to your cart again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Error",
-        description: error.message || "There was an error processing your order.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-8">
-        {/* Contact Information */}
         <Card>
           <CardHeader>
             <CardTitle>Contact Information</CardTitle>
@@ -190,7 +286,7 @@ export default function CheckoutForm() {
                   value={formData.firstName} 
                   onChange={handleInputChange} 
                   required 
-                  disabled={isLoading}
+                  disabled={isLoading || isCartLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -200,7 +296,7 @@ export default function CheckoutForm() {
                   value={formData.lastName} 
                   onChange={handleInputChange} 
                   required 
-                  disabled={isLoading}
+                  disabled={isLoading || isCartLoading}
                 />
               </div>
             </div>
@@ -212,7 +308,7 @@ export default function CheckoutForm() {
                 value={formData.email} 
                 onChange={handleInputChange} 
                 required 
-                disabled={isLoading}
+                disabled={isLoading || isCartLoading}
               />
             </div>
             <div className="space-y-2">
@@ -223,32 +319,31 @@ export default function CheckoutForm() {
                 value={formData.phone} 
                 onChange={handleInputChange} 
                 required 
-                disabled={isLoading}
+                disabled={isLoading || isCartLoading}
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Shipping Address */}
         <Card>
           <CardHeader>
             <CardTitle>Shipping Address</CardTitle>
             <CardDescription>Enter the address where you want your order delivered.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {user && addresses.length > 0 && (
+            {user && allAddresses.length > 0 && (
               <div className="space-y-2">
                 <Label>Saved Addresses</Label>
                 <Select 
                   value={selectedAddressId} 
                   onValueChange={handleAddressChange}
-                  disabled={isLoading}
+                  disabled={isLoading || isCartLoading}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a saved address" />
                   </SelectTrigger>
                   <SelectContent>
-                    {addresses.map((address) => (
+                    {allAddresses.map((address) => (
                       <SelectItem key={address.id} value={address.id || ""}>
                         {address.name} - {address.address}, {address.city}
                       </SelectItem>
@@ -265,16 +360,7 @@ export default function CheckoutForm() {
                 value={formData.address} 
                 onChange={handleInputChange} 
                 required 
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address2">Apartment, suite, etc. (optional)</Label>
-              <Input 
-                id="address2" 
-                value={formData.address2} 
-                onChange={handleInputChange} 
-                disabled={isLoading}
+                disabled={isLoading || isCartLoading}
               />
             </div>
 
@@ -286,7 +372,7 @@ export default function CheckoutForm() {
                   value={formData.city} 
                   onChange={handleInputChange} 
                   required 
-                  disabled={isLoading}
+                  disabled={isLoading || isCartLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -296,7 +382,7 @@ export default function CheckoutForm() {
                   value={formData.state} 
                   onChange={handleInputChange} 
                   required 
-                  disabled={isLoading}
+                  disabled={isLoading || isCartLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -306,9 +392,18 @@ export default function CheckoutForm() {
                   value={formData.zip} 
                   onChange={handleInputChange} 
                   required 
-                  disabled={isLoading}
+                  disabled={isLoading || isCartLoading}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="country">Country</Label>
+              <Input
+                id="country"
+                value={formData.country}
+                disabled
+              />
             </div>
           </CardContent>
         </Card>
@@ -317,7 +412,7 @@ export default function CheckoutForm() {
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isLoading || !cart?.items?.length || !selectedAddressId}
+            disabled={isLoading || isCartLoading || !items.length || !formData.address}
           >
             {isLoading ? (
               <>
@@ -325,7 +420,7 @@ export default function CheckoutForm() {
                 Processing...
               </>
             ) : (
-              `Place Order (${cart?.items?.length || 0} items)`
+              `Place Order (${items.length} items)`
             )}
           </Button>
         </CardFooter>

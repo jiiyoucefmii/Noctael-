@@ -7,48 +7,28 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { useCart } from "@/hooks/use-cart"
-import type { Product, Variant } from "@/utils/api/products"
+import type { Product, ProductVariant } from "@/utils/api/products"
 
 interface ProductDetailsProps {
   product: Product
-  selectedVariant: Variant | undefined
-  setSelectedVariant: (variant: Variant) => void
+  selectedVariant: ProductVariant | undefined
+  onVariantChange: (variant: ProductVariant) => void
+  quantity: number
+  onQuantityChange: (quantity: number) => void
+  onAddToCart: () => void
+  isAddingToCart: boolean
 }
 
 export default function ProductDetails({
   product,
   selectedVariant,
-  setSelectedVariant
+  onVariantChange,
+  quantity,
+  onQuantityChange,
+  onAddToCart,
+  isAddingToCart
 }: ProductDetailsProps) {
-  const [quantity, setQuantity] = useState(1)
   const { toast } = useToast()
-  const { addToCart, isLoading } = useCart()
-
-  const handleAddToCart = async () => {
-    if (!selectedVariant) {
-      toast({
-        title: "Please select an option",
-        description: "You must select a variant before adding to cart.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      await addToCart(product, quantity, selectedVariant.size, selectedVariant.id)
-
-      toast({
-        title: "Added to cart",
-        description: `${product.name} (${selectedVariant.size}) has been added to your cart.`,
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add to cart",
-        variant: "destructive"
-      })
-    }
-  }
 
   const availableStock = selectedVariant?.stock || 0
 
@@ -91,7 +71,7 @@ export default function ProductDetails({
                   variant="outline"
                   size="sm"
                   className={`capitalize ${selectedVariant?.color === color ? 'border-2 border-primary' : ''}`}
-                  onClick={() => variantForColor && setSelectedVariant(variantForColor)}
+                  onClick={() => variantForColor && onVariantChange(variantForColor)}
                   disabled={!isAvailable}
                 >
                   {color}
@@ -122,7 +102,7 @@ export default function ProductDetails({
                   size="sm"
                   disabled={!isAvailable}
                   className={`${selectedVariant?.size === size ? 'border-2 border-primary' : ''} ${!isAvailable ? 'opacity-50' : ''}`}
-                  onClick={() => variantForSize && setSelectedVariant(variantForSize)}
+                  onClick={() => variantForSize && onVariantChange(variantForSize)}
                 >
                   {size}
                   {!isAvailable && " (Out of Stock)"}
@@ -140,7 +120,7 @@ export default function ProductDetails({
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
             disabled={quantity <= 1}
           >
             -
@@ -149,7 +129,7 @@ export default function ProductDetails({
           <Button
             variant="outline"
             size="icon"
-            onClick={() => setQuantity(Math.min(availableStock, quantity + 1))}
+            onClick={() => onQuantityChange(Math.min(availableStock, quantity + 1))}
             disabled={quantity >= availableStock}
           >
             +
@@ -164,10 +144,10 @@ export default function ProductDetails({
       <div className="flex space-x-4">
         <Button
           className="flex-1"
-          onClick={handleAddToCart}
-          disabled={!selectedVariant || isLoading || availableStock === 0}
+          onClick={onAddToCart}
+          disabled={!selectedVariant || isAddingToCart || availableStock === 0}
         >
-          {isLoading ? (
+          {isAddingToCart ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Adding...

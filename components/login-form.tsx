@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { loginUser } from "@/utils/api/users"
+import { adminLogin } from "@/utils/api/admin" // ✅ Import admin login function
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
@@ -21,8 +22,10 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+    setIsLoading(true)
+
     try {
+      // Attempt regular user login first
       const user = await loginUser({ email, password })
 
       toast({
@@ -30,14 +33,27 @@ export default function LoginForm() {
         description: `Welcome back, ${user.first_name || "user"}!`,
       })
 
-      router.push("/account")
-    } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description:
-          error.response?.data?.message || "Something went wrong. Please try again.",
-        variant: "destructive",
-      })
+      router.push("/")
+    } catch (userErr: any) {
+      try {
+        // Try admin login if regular login fails
+        const admin = await adminLogin({ email, password })
+
+        toast({
+          title: "Admin login successful",
+          description: `Welcome, ${admin.name || "admin"}!`,
+        })
+
+        router.push("/admin/dashboard") 
+      } catch (adminErr: any) {
+        // Both logins failed
+        toast({
+          title: "Login failed",
+          description:
+            userErr.response?.data?.message || adminErr.message || "Something went wrong. Please try again.",
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsLoading(false)
     }

@@ -4,64 +4,43 @@ import Image from "next/image"
 import Link from "next/link"
 import { Trash2, ShoppingBag, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { getCart, updateCartItem, removeFromCart } from "@/utils/api/cart"
-
-interface CartItem {
-  id: string
-  product_id: string
-  name: string
-  image: string
-  size: string | null
-  color: string | null
-  price: number
-  quantity: number
-  item_total: number
-}
-
-interface CartData {
-  items: CartItem[]
-  count: number
-  subtotal: number
-}
+import { useCart } from "@/hooks/use-cart"
+import { useState } from "react"
+import { Separator } from "@/components/ui/separator"
 
 export default function CartItems() {
-  const [cart, setCart] = useState<CartData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { 
+    items, 
+    count, 
+    subtotal, 
+    discount,
+    shipping,
+    total,
+    cart_id,
+    updateQuantity, 
+    removeFromCart, 
+    isLoading 
+  } = useCart()
+  
   const [updatingItems, setUpdatingItems] = useState<Record<string, boolean>>({})
   const [removingItems, setRemovingItems] = useState<Record<string, boolean>>({})
   const router = useRouter()
   const { toast } = useToast()
 
-  const fetchCart = async () => {
-    try {
-      setLoading(true)
-      const cartData = await getCart()
-      setCart(cartData)
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load your cart. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
+  const getImageUrl = (imagePath: string) => {
+    if (!imagePath) return "/placeholder.svg"
+    if (imagePath.startsWith('http')) return imagePath
+    return `${process.env.NEXT_PUBLIC_API_URL}${imagePath}`
   }
-
-  useEffect(() => {
-    fetchCart()
-  }, [])
 
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) return
     
     try {
       setUpdatingItems(prev => ({ ...prev, [itemId]: true }))
-      await updateCartItem(itemId, newQuantity)
-      await fetchCart() // Refresh cart data
+      await updateQuantity(itemId, newQuantity)
     } catch (error) {
       toast({
         title: "Error",
@@ -77,7 +56,6 @@ export default function CartItems() {
     try {
       setRemovingItems(prev => ({ ...prev, [itemId]: true }))
       await removeFromCart(itemId)
-      await fetchCart() // Refresh cart data
       toast({
         title: "Success",
         description: "Item removed from cart",
@@ -93,13 +71,23 @@ export default function CartItems() {
     }
   }
 
-  const getImageUrl = (imagePath: string) => {
-    if (!imagePath) return "/placeholder.svg"
-    if (imagePath.startsWith('http')) return imagePath
-    return `${process.env.NEXT_PUBLIC_API_URL}${imagePath}`
+  const handleCheckout = () => {
+    // Prepare cart data for checkout
+    const cartData = {
+      cart_id: cart_id,
+      subtotal,
+      discount_amount: discount?.amount || 0,
+      discount_code_id: discount?.code || null,
+      shipping_cost: shipping,
+      total
+    }
+    
+    // Store in session to use during checkout
+    sessionStorage.setItem('cartData', JSON.stringify(cartData))
+    router.push('/checkout')
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex h-60 flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
         <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-400" />
@@ -108,7 +96,7 @@ export default function CartItems() {
     )
   }
 
-  if (!cart || cart.count === 0) {
+  if (!items || items.length === 0) {
     return (
       <div className="flex h-60 flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
         <ShoppingBag className="mb-4 h-12 w-12 text-gray-300" />
@@ -125,7 +113,7 @@ export default function CartItems() {
     <div className="rounded-lg border">
       <div className="p-6">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-medium">Your Cart ({cart.count})</h2>
+          <h2 className="text-xl font-medium">Your Cart ({count})</h2>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -137,7 +125,7 @@ export default function CartItems() {
         </div>
 
         <div className="divide-y">
-          {cart.items.map((item) => (
+          {items.map((item) => (
             <div key={`${item.id}-${item.size}`} className="flex py-6">
               <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border">
                 <Image 
@@ -168,7 +156,7 @@ export default function CartItems() {
                     )}
                   </div>
                   <p className="text-base font-medium">
-                    {Number(item.item_total).toFixed(2)} Da
+                    {Number(item.price * item.quantity).toFixed(2)} Da
                   </p>
                 </div>
 
@@ -226,17 +214,41 @@ export default function CartItems() {
         </div>
 
         <div className="mt-8 border-t pt-6">
-          <div className="flex justify-between text-lg font-medium">
-            <span>Subtotal</span>
-            <span>{Number(cart.subtotal)} Da</span>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span>{Number(subtotal).toFixed(2)} Da</span>
             </div>
+            {discount && discount.amount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Discount ({discount.percent}%)</span>
+                <span>-{Number(discount.amount).toFixed(2)} Da</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span>Shipping</span>
+              <span>{shipping === 0 ? "Free" : `${Number(shipping).toFixed(2)} Da`}</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between font-medium">
+              <span>Total</span>
+              <span>
+                {Math.max(0, total).toFixed(2)} Da
+                {discount?.amount > 0 && (
+                  <span className="ml-2 text-sm text-gray-500 line-through">
+                    {Number(subtotal + shipping).toFixed(2)} Da
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
           <p className="mt-2 text-sm text-gray-500">
-            Shipping and taxes calculated at checkout
+            Taxes calculated at checkout
           </p>
           <Button
             className="mt-6 w-full"
-            onClick={() => router.push('/checkout')}
-            disabled={cart.count === 0}
+            onClick={handleCheckout}
+            disabled={items.length === 0}
           >
             Proceed to Checkout
           </Button>

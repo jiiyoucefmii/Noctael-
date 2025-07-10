@@ -3,24 +3,65 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import ProductDetails from "@/components/product-details"
-import type { Product, Variant } from "@/utils/api/products"
+import type { Product, ProductVariant } from "@/utils/api/products"
+import { useCart } from "@/hooks/use-cart"
+import { useToast } from "@/hooks/use-toast"
 
 export default function ProductPageClient({ product }: { product: Product }) {
+  const { addToCart } = useCart()
+  const { toast } = useToast()
   const initialVariant = product.variants?.[0]
+  const initialImage = initialVariant?.images?.[0]?.image_url || product.main_image || "/placeholder.svg"
 
-  const [selectedVariant, setSelectedVariant] = useState<Variant | undefined>(initialVariant)
-  const [selectedImage, setSelectedImage] = useState<string | null>(initialVariant?.images?.[0]?.image_url || product.main_image || null)
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(initialVariant)
+  const [selectedImage, setSelectedImage] = useState<string>(initialImage)
+  const [quantity, setQuantity] = useState(1)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
 
-  // When variant changes, reset selectedImage to the first image of that variant
+  // When variant changes, update selected image
   useEffect(() => {
-    if (selectedVariant?.images?.[0]?.image_url) {
-      setSelectedImage(selectedVariant.images[0].image_url)
-    } else if (product.main_image) {
-      setSelectedImage(product.main_image)
-    }
+    const newImage = selectedVariant?.images?.[0]?.image_url || product.main_image || "/placeholder.svg"
+    setSelectedImage(newImage)
   }, [selectedVariant, product.main_image])
 
-  const variantImages = selectedVariant?.images?.map((img: { image_url: any }) => img.image_url).filter(Boolean) || []
+  const handleAddToCart = async () => {
+    if (!selectedVariant) {
+      toast({
+        title: "Please select a variant",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsAddingToCart(true)
+    try {
+      await addToCart(selectedVariant.id ?? "", quantity)
+      toast({
+        title: "Added to cart",
+        description: `${product.name} (${selectedVariant.color}, ${selectedVariant.size}) has been added to your cart`
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add to cart",
+        variant: "destructive"
+      })
+    } finally {
+      setIsAddingToCart(false)
+    }
+  }
+
+  // Get all images for the current variant or fallback to product images
+  const variantImages = selectedVariant?.images?.map(img => img.image_url).filter(Boolean) || 
+                       (product.main_image ? [product.main_image] : [])
+
+  // Helper function to get complete image URL
+  const getImageUrl = (imgPath: string | undefined) => {
+    if (!imgPath) return "/placeholder.svg"
+    return imgPath.startsWith('/') 
+      ? `${process.env.NEXT_PUBLIC_API_URL}${imgPath}`
+      : imgPath
+  }
 
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -29,16 +70,19 @@ export default function ProductPageClient({ product }: { product: Product }) {
         {/* Main Image */}
         <div className="relative aspect-square overflow-hidden rounded-lg border">
           <Image
-            src={selectedImage?.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL}${selectedImage}` : selectedImage || "/placeholder.svg"}
+            src={getImageUrl(selectedImage)}
             alt={product.name}
             fill
             className="object-cover transition-all duration-300"
             priority
             sizes="(max-width: 768px) 100vw, 50vw"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/placeholder.svg"
+            }}
           />
         </div>
 
-        {/* Thumbnails */}
+        {/* Thumbnails - Only show if we have multiple images */}
         {variantImages.length > 1 && (
           <div className="grid grid-cols-4 gap-4">
             {variantImages.map((img, i) => (
@@ -50,10 +94,13 @@ export default function ProductPageClient({ product }: { product: Product }) {
                 }`}
               >
                 <Image
-                  src={img.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL}${img}` : img}
-                  alt={`Thumbnail ${i + 1}`}
+                  src={getImageUrl(img)}
+                  alt={`${product.name} thumbnail ${i + 1}`}
                   fill
                   className="object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/placeholder.svg"
+                  }}
                 />
               </button>
             ))}
@@ -61,11 +108,15 @@ export default function ProductPageClient({ product }: { product: Product }) {
         )}
       </div>
 
-      {/* Details */}
+      {/* Product Details Section */}
       <ProductDetails
         product={product}
         selectedVariant={selectedVariant}
-        setSelectedVariant={setSelectedVariant}
+        onVariantChange={setSelectedVariant}
+        quantity={quantity}
+        onQuantityChange={setQuantity}
+        onAddToCart={handleAddToCart}
+        isAddingToCart={isAddingToCart}
       />
     </div>
   )

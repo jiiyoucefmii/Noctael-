@@ -3,70 +3,47 @@
 import Image from "next/image"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { useEffect, useState } from "react"
-import { getCart } from "@/utils/api/cart"
-import { Cart, CartItem } from "@/utils/api/cart"
+import { useCart } from "@/hooks/use-cart"
+import { Loader2 } from "lucide-react"
+import { useEffect } from "react"
 
 export default function OrderSummary() {
-  const [cart, setCart] = useState<Cart | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { 
+    items, 
+    subtotal, 
+    discount,
+    isLoading,
+    shipping,
+    total
+  } = useCart()
 
   useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        setLoading(true)
-        const cartData = await getCart()
-        setCart(cartData)
-      } catch (err) {
-        setError("Failed to load cart data")
-        console.error("Error fetching cart:", err)
-      } finally {
-        setLoading(false)
-      }
-    }
+    console.log("Shipping cost:", shipping);
+  }, [shipping])
 
-    fetchCart()
-  }, [])
-
-  // Helper function to construct proper image URL
   const getImageUrl = (imagePath: string | undefined) => {
     if (!imagePath) return "/placeholder.svg"
     if (imagePath.startsWith('http')) return imagePath
-    // Ensure we don't get double slashes when combining
     const baseUrl = process.env.NEXT_PUBLIC_API_URL?.endsWith('/') 
       ? process.env.NEXT_PUBLIC_API_URL.slice(0, -1)
       : process.env.NEXT_PUBLIC_API_URL
     return `${baseUrl}${imagePath}`
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Order Summary</CardTitle>
         </CardHeader>
         <CardContent className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <Loader2 className="h-8 w-8 animate-spin" />
         </CardContent>
       </Card>
     )
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Order Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-red-500">{error}</p>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (!cart || cart.items.length === 0) {
+  if (!items || items.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -79,6 +56,14 @@ export default function OrderSummary() {
     )
   }
 
+  // Calculate discount percentage properly
+  const discountPercent = discount?.amount && subtotal > 0
+    ? Math.round((discount.amount / subtotal) * 100)
+    : 0
+
+  // Calculate the original total before discount (for strikethrough display)
+  const originalTotal = subtotal + shipping
+
   return (
     <Card>
       <CardHeader>
@@ -86,7 +71,7 @@ export default function OrderSummary() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="max-h-80 overflow-auto">
-          {cart.items.map((item: CartItem) => (
+          {items.map((item) => (
             <div key={`${item.id}-${item.size}`} className="flex items-center py-2">
               <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
                 <Image 
@@ -103,7 +88,9 @@ export default function OrderSummary() {
                   {item.size && `Size: ${item.size} · `}Qty: {item.quantity}
                 </p>
               </div>
-              <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+              <p className="font-medium">
+                {Number(item.price * item.quantity).toFixed(2)} Da
+              </p>
             </div>
           ))}
         </div>
@@ -111,19 +98,39 @@ export default function OrderSummary() {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span>Subtotal</span>
-            <span>{Number(cart.subtotal).toFixed(2)}</span>
-            </div>
+            <span>{Number(subtotal).toFixed(2)} Da</span>
+          </div>
+          
+          {discount && discount.amount > 0 && (
+            <>
+              <div className="flex justify-between text-green-600">
+                <span>Discount ({discountPercent}%)</span>
+                <span>-{Number(discount.amount).toFixed(2)} Da</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Subtotal after discount</span>
+                <span>{Number(subtotal - discount.amount).toFixed(2)} Da</span>
+              </div>
+            </>
+          )}
+
           <div className="flex justify-between">
             <span>Shipping</span>
-            <span>{cart.subtotal > 100 ? "Free" : "$10.00"}</span>
+            <span>{shipping === 0 ? "Free" : `${Number(shipping).toFixed(2)} Da`}</span>
           </div>
         </div>
         <Separator />
         <div className="flex justify-between font-medium">
           <span>Total</span>
           <span>
-  ${Number(cart.subtotal + (Number(cart.subtotal) > 100 ? 0 : 10)).toFixed(2)}
+  {Number(subtotal - (discount?.amount ?? 0)).toFixed(2)} Da
+  {(discount?.amount ?? 0) > 0 && (
+    <span className="ml-2 text-sm text-gray-500 line-through">
+      {Number(originalTotal).toFixed(2)} Da
+    </span>
+  )}
 </span>
+
         </div>
       </CardContent>
       <CardFooter className="text-sm text-gray-500">

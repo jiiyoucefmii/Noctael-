@@ -13,61 +13,49 @@ import {
   type Cart as ApiCart
 } from "@/utils/api/cart"
 
-interface LocalCartItem extends Product {
-  quantity: number
-  size?: string
-  variant_id?: string
-}
-
 interface CartContextType {
-  items: LocalCartItem[]
-  addToCart: (product: Product, quantity?: number, size?: string, variant_id?: string) => Promise<void>
-  removeFromCart: (itemId: string) => Promise<void>
-  updateQuantity: (itemId: string, quantity: number) => Promise<void>
-  clearCart: () => Promise<void>
-  syncCart: () => Promise<void>
+  items: ApiCartItem[]
+  count: number
   subtotal: number
   shipping: number
   total: number
+  cart_id: string | null 
+  discount?: {
+    code: string
+    percent: number
+    amount: number
+  } | null
   isLoading: boolean
+  addToCart: (variant_id: string, quantity?: number) => Promise<void>
+  updateQuantity: (cart_item_id: string, quantity: number) => Promise<void>
+  removeFromCart: (cart_item_id: string) => Promise<void>
+  clearCart: () => Promise<void>
+  applyDiscount: (discount: { code: string; percent: number; amount: number }) => void
+  removeDiscount: () => void
 }
 
 export const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [localItems, setLocalItems] = useState<LocalCartItem[]>([])
+  const [cart, setCart] = useState<ApiCart | null>(null)
+  const [discount, setDiscount] = useState<CartContextType['discount']>(null)
   const [isLoading, setIsLoading] = useState(true)
-
-  // Convert API cart items to local format
-  const apiToLocalItem = (apiItem: ApiCartItem): LocalCartItem => ({
-    id: apiItem.product_id,
-    variant_id: apiItem.variant_id,
-    name: apiItem.name,
-    price: apiItem.price,
-    quantity: apiItem.quantity,
-    size: apiItem.size,
-    color: apiItem.color,
-    main_image: apiItem.image || '',
-    // Add other product fields as needed
-  })
 
   // Load cart from API on mount
   const loadCart = async () => {
     try {
       setIsLoading(true)
       const apiCart = await apiGetCart()
-      setLocalItems(apiCart.items.map(apiToLocalItem))
+      setCart(apiCart)
     } catch (error) {
       console.error("Failed to load cart:", error)
-      // Fallback to localStorage if API fails
-      const savedCart = localStorage.getItem("cart")
-      if (savedCart) {
-        try {
-          setLocalItems(JSON.parse(savedCart))
-        } catch (e) {
-          console.error("Failed to parse local cart:", e)
-        }
-      }
+      // Fallback to empty cart if API fails
+      setCart({
+        cart_id: 'local-cart',
+        items: [],
+        count: 0,
+        subtotal: 0
+      })
     } finally {
       setIsLoading(false)
     }
@@ -77,51 +65,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     loadCart()
   }, [])
 
-  // Save local items to localStorage as backup
-  useEffect(() => {
-    if (!isLoading && localItems.length > 0) {
-      localStorage.setItem("cart", JSON.stringify(localItems))
-    }
-  }, [localItems, isLoading])
-
-  const addToCart = async (product: Product, quantity = 1, size?: string, variant_id?: string) => {
-    // If variant_id wasn't provided, try to get it from product
-    if (!variant_id && product.variants?.[0]?.id) {
-      variant_id = product.variants[0].id
-    }
-  
-    if (!variant_id) {
-      throw new Error("Variant ID is required - no variant available for this product")
-    }
-  
+  const addToCart = async (variant_id: string, quantity = 1) => {
     try {
       setIsLoading(true)
       const { cart_item } = await apiAddToCart(variant_id, quantity)
-      
-      setLocalItems(prev => {
-        const existing = prev.find(item => 
-          item.variant_id === variant_id && 
-          item.size === size
-        )
-  
-        if (existing) {
-          return prev.map(item => 
-            item.variant_id === variant_id && item.size === size
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-          )
-        }
-  
-        return [...prev, {
-          ...product,
-          variant_id,
-          quantity,
-          size,
-          // Ensure we have all required fields
-          price: product.variants?.find(v => v.id === variant_id)?.price || product.price,
-          main_image: product.main_image || product.variants?.find(v => v.id === variant_id)?.images?.[0]?.image_url || ''
-        }]
-      })
+      await loadCart() // Refresh cart after adding
     } catch (error) {
       console.error("Failed to add to cart:", error)
       throw error
@@ -130,32 +78,28 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const removeFromCart = async (itemId: string) => {
+  const updateQuantity = async (cart_item_id: string, quantity: number) => {
+    if (quantity < 1) return
+
     try {
       setIsLoading(true)
-      await apiRemoveFromCart(itemId)
-      setLocalItems(prev => prev.filter(item => item.id !== itemId))
+      await apiUpdateCartItem(cart_item_id, quantity)
+      await loadCart() // Refresh cart after updating
     } catch (error) {
-      console.error("Failed to remove item:", error)
+      console.error("Failed to update quantity:", error)
       throw error
     } finally {
       setIsLoading(false)
     }
   }
 
-  const updateQuantity = async (itemId: string, quantity: number) => {
-    if (quantity < 1) return
-
+  const removeFromCart = async (cart_item_id: string) => {
     try {
       setIsLoading(true)
-      await apiUpdateCartItem(itemId, quantity)
-      setLocalItems(prev => 
-        prev.map(item => 
-          item.id === itemId ? { ...item, quantity } : item
-        )
-      )
+      await apiRemoveFromCart(cart_item_id)
+      await loadCart() // Refresh cart after removing
     } catch (error) {
-      console.error("Failed to update quantity:", error)
+      console.error("Failed to remove item:", error)
       throw error
     } finally {
       setIsLoading(false)
@@ -166,8 +110,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true)
       await apiClearCart()
-      setLocalItems([])
-      localStorage.removeItem("cart")
+      setCart({
+        cart_id: 'local-cart',
+        items: [],
+        count: 0,
+        subtotal: 0
+      })
+      setDiscount(null)
     } catch (error) {
       console.error("Failed to clear cart:", error)
       throw error
@@ -176,29 +125,40 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Manual sync with API
-  const syncCart = async () => {
-    await loadCart()
+  const applyDiscount = (discount: { code: string; percent: number; amount: number }) => {
+    setDiscount(discount)
+  }
+
+  const removeDiscount = () => {
+    setDiscount(null)
   }
 
   // Calculate totals
-  const subtotal = localItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const shipping = subtotal > 100 ? 0 : 10
-  const total = subtotal + shipping
+  // In CartContext provider
+const subtotal = cart?.subtotal || 0;
+const shipping = subtotal > 100 ? 0 : 10;
+// Calculate discount amount (if any)
+const discountAmount = discount ? discount.amount : 0;
+// Ensure total never goes below 0
+const total = Math.max(0, subtotal + shipping - discountAmount);
 
   return (
     <CartContext.Provider
       value={{
-        items: localItems,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        syncCart,
+        items: cart?.items || [],
+        count: cart?.count || 0,
         subtotal,
         shipping,
         total,
-        isLoading
+        cart_id: cart?.cart_id || null,
+        discount,
+        isLoading,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        applyDiscount,
+        removeDiscount
       }}
     >
       {children}

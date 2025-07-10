@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'https://noctael.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+
 export interface Address {
   id: string;
   name: string;
@@ -59,6 +60,8 @@ export interface CheckoutData {
   shipping_address_id: string;
   cart_id: string;
   promo_code?: string;
+  is_discount?: boolean;
+  discounted_total?: number;
 }
 
 const axiosInstance = axios.create({
@@ -83,28 +86,28 @@ interface UserStatistics {
     is_verified: boolean
   }
   order_statistics: {
-    total_orders: number  // Changed from string to number
-    total_spent: number   // Changed from string to number
-    average_order_value: number  // Changed from string to number
+    total_orders: number  
+    total_spent: number   
+    average_order_value: number  
     first_order_date: string
     last_order_date: string
-    pending_orders: number  // Changed from string to number
-    accepted_orders: number  // Changed from string to number
+    pending_orders: number  
+    accepted_orders: number  
     monthly_spending: Array<{
       month: string
-      order_count: number  // Changed from string to number
-      total_spent: number  // Changed from string to number
+      order_count: number  
+      total_spent: number  
     }>
     favorite_categories: Array<{
       category_name: string
-      items_ordered: number  // Changed from string to number
-      total_quantity: number  // Changed from string to number
+      items_ordered: number  
+      total_quantity: number  
     }>
   }
   recent_orders: Order[]
-  wishlist_items: number  // Changed from string to number
-  cart_items: number  // Changed from string to number
-  saved_addresses: number  // Changed from string to number
+  wishlist_items: number  
+  cart_items: number  
+  saved_addresses: number  
 }
 
 // =================== User ===================

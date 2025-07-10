@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -13,15 +12,19 @@ import { useToast } from "@/hooks/use-toast"
 import { calculateDiscount } from "@/utils/api/promos"
 
 export default function CartSummary() {
-  const { subtotal, shipping, total, items } = useCart()
+  const {
+    items,
+    subtotal,
+    shipping,
+    total,
+    discount,
+    applyDiscount,
+    removeDiscount
+  } = useCart()
+
   const [isLoading, setIsLoading] = useState(false)
   const [promoLoading, setPromoLoading] = useState(false)
   const [promoCode, setPromoCode] = useState("")
-  const [discount, setDiscount] = useState<{
-    code: string
-    percent: number
-    amount: number
-  } | null>(null)
   const [error, setError] = useState("")
   const router = useRouter()
   const { toast } = useToast()
@@ -31,16 +34,14 @@ export default function CartSummary() {
       toast({
         title: "Cart is empty",
         description: "Add some items to your cart before checking out.",
-        variant: "destructive",
+        variant: "destructive"
       })
       return
     }
-
     setIsLoading(true)
     router.push("/checkout")
   }
 
-  
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return
 
@@ -51,15 +52,14 @@ export default function CartSummary() {
         code: promoCode,
         subtotal
       })
-
-      setDiscount({
+      applyDiscount({
         code: response.discount_code,
         percent: response.discount_percent,
         amount: response.discount_amount
       })
     } catch (err) {
       setError("Invalid or expired promo code")
-      setDiscount(null)
+      removeDiscount()
     } finally {
       setPromoLoading(false)
     }
@@ -67,36 +67,36 @@ export default function CartSummary() {
 
   const handleRemovePromo = () => {
     setPromoCode("")
-    setDiscount(null)
+    removeDiscount()
     setError("")
   }
 
-  const calculatedTotal = discount ? total - discount.amount : total
+  const calculatedTotal = Math.max(0, total)
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Order Summary</CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-4">
         <div className="flex justify-between">
           <span>Subtotal</span>
-          <span>{subtotal} Da</span>
+          <span>{Number(subtotal).toFixed(2)} Da</span>
         </div>
 
-        {discount && (
+        {discount && discount.amount > 0 && (
           <div className="flex justify-between text-green-600">
             <span>Discount ({discount.percent}% off)</span>
-            <span>-{discount.amount} Da</span>
+            <span>-{Number(discount.amount).toFixed(2)} Da</span>
           </div>
         )}
 
         <div className="flex justify-between">
           <span>Shipping</span>
-          <span>{shipping === 0 ? "Free" : `${shipping} Da`}</span>
+          <span>{shipping === 0 ? "Free" : `${Number(shipping).toFixed(2)} Da`}</span>
         </div>
 
-        {/* Promo Code Input */}
         <div className="space-y-2">
           <div className="flex gap-2">
             <Input
@@ -132,22 +132,23 @@ export default function CartSummary() {
 
         <Separator />
 
-        <div className="flex justify-between font-medium">
+        <div className="flex justify-between font-medium text-lg">
           <span>Total</span>
           <span>
-            {calculatedTotal} Da
-            {discount && (
+            {Number(calculatedTotal).toFixed(2)} Da
+            {discount?.amount > 0 && (
               <span className="ml-2 text-sm text-gray-500 line-through">
-                {total} Da
+                {Number(subtotal + shipping).toFixed(2)} Da
               </span>
             )}
           </span>
         </div>
       </CardContent>
+
       <CardFooter>
-        <Button 
-          className="w-full" 
-          onClick={handleCheckout} 
+        <Button
+          className="w-full"
+          onClick={handleCheckout}
           disabled={isLoading || items.length === 0}
         >
           {isLoading ? (

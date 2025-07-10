@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom"
+"use client"
+
+import Link from "next/link"
 import { ShoppingBag } from "lucide-react"
-
-import { Button } from "../../components/ui/button"
-import CartItems from "../../components/cart-items"
-import CartSummary from "../../components/cart-summary"
-
+import { Button } from "@/components/ui/button"
+import CartItems from "@/components/cart-items"
+import CartSummary from "@/components/cart-summary"
 
 export default function CartPage() {
   return (
@@ -22,12 +22,12 @@ export default function CartPage() {
         <div className="mt-8 text-center">
           <p className="mb-4 text-sm text-gray-500">
             Need help? Contact our customer support at{" "}
-            <Link to="/contact" className="text-black underline">
+            <Link href="/contact" className="text-black underline">
               support@noctael.com
             </Link>
           </p>
           <Button asChild variant="outline">
-            <Link to="/products">
+            <Link href="/products">
               <ShoppingBag className="mr-2 h-4 w-4" />
               Continue Shopping
             </Link>

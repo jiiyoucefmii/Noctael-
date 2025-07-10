@@ -1,20 +1,74 @@
-import type { Metadata } from "next"
+"use client"
+
 import Link from "next/link"
 import { CheckCircle, Package, ShoppingBag } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-
-export const metadata: Metadata = {
-  title: "Order Confirmation | Noctael",
-  description: "Your order has been placed successfully.",
-}
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { getOrderById, Order } from "@/utils/api/orders"
+import { useToast } from "@/hooks/use-toast"
 
 export default function OrderConfirmationPage() {
-  // Generate a random order number
-  const orderNumber = `NOC${Math.floor(Math.random() * 10000)
-    .toString()
-    .padStart(4, "0")}`
+  const searchParams = useSearchParams()
+  const orderId = searchParams?.get("orderId")
+  const { toast } = useToast()
+  const [order, setOrder] = useState<Order | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!orderId) {
+      setLoading(false)
+      return
+    }
+
+    const fetchOrder = async () => {
+      try {
+        setLoading(true)
+        const { order } = await getOrderById(orderId)
+        console.log(order)
+        setOrder(order)
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load order details",
+          variant: "destructive"
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchOrder()
+  }, [orderId, toast])
+
+  if (loading) {
+    return (
+      <div className="py-10">
+        <div className="container mx-auto px-4 max-w-2xl">
+          <div className="text-center">Loading order details...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!order) {
+    return (
+      <div className="py-10">
+        <div className="container mx-auto px-4 max-w-2xl">
+          <div className="text-center">Order not found</div>
+        </div>
+      </div>
+    )
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
 
   return (
     <main className="flex-1 py-10">
@@ -27,48 +81,80 @@ export default function OrderConfirmationPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Order #{orderNumber}</CardTitle>
-            <CardDescription>Placed on {new Date().toLocaleDateString()}</CardDescription>
+            <CardTitle>Order #{order.id}</CardTitle>
+            <CardDescription>Placed on {formatDate(order.created_at)}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="rounded-lg bg-gray-50 p-4">
               <div className="flex items-center">
                 <Package className="mr-2 h-5 w-5 text-gray-500" />
-                <span className="font-medium">Shipping Update</span>
+                <span className="font-medium">Order Status: {order.status}</span>
               </div>
               <p className="mt-2 text-sm text-gray-600">
-                You will receive an email with tracking information once your order ships.
+                {order.status === 'pending' 
+                  ? "Your order is being processed. You'll receive an email with tracking information once it ships."
+                  : "Your order has been accepted and is being prepared for shipment."}
               </p>
             </div>
 
             <div>
-              <h3 className="mb-2 font-medium">Shipping Address</h3>
-              <p className="text-sm text-gray-600">
-                John Doe
-                <br />
-                123 Main Street
-                <br />
-                Apt 4B
-                <br />
-                New York, NY 10001
-                <br />          
-
-              </p>
+              <h3 className="mb-2 font-medium">Order Summary</h3>
+              <div className="space-y-2">
+                {order.items.map(item => (
+                  <div key={item.id} className="flex justify-between">
+                  <div>
+                      <p>{item.product_name}</p>
+                      {item.color && item.size && (
+                        <p className="text-sm text-gray-500">
+                          {item.color}, {item.size}
+                        </p>
+                      )}
+                    </div>
+                    <p>{item.price} DA × {item.quantity}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>{order.subtotal} DA</span>
+                </div>
+                {order.discount_amount && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount</span>
+                    <span>-{order.discount_amount} DA</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-medium mt-2">
+                  <span>Total</span>
+                  <span>{order.total} DA</span>
+                </div>
+              </div>
             </div>
+
+            <div>
+            <h3 className="mb-2 font-medium">Shipping Address</h3>
+            <p className="text-sm text-gray-600">
+              {order.first_name} {order.last_name}
+              <br />
+              {order.shipping_address}
+              <br />
+              {order.shipping_city}, {order.shipping_state} {order.shipping_zip}
+              <br />
+              {order.shipping_country}
+            </p>
+          </div>
 
             <div>
               <h3 className="mb-2 font-medium">Payment Method</h3>
-
-              <p className="text-sm text-gray-600">Payment on Delivery</p>
-              <p className="text-sm text-red-700">Keep in touch to confirm your order via a phone call</p>
-
+              <p className="text-sm text-gray-600">Payment on delivery</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button asChild className="w-full">
-              <Link href="/account/orders">View Order Status</Link>
+              <Link href={`/account/orders/${order.id}`}>View Order Details</Link>
             </Button>
-            <Button asChild variant="outline" className="w-full">
+            <Button asChild variant="outline" className="w-full bg-transparent">
               <Link href="/products">
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 Continue Shopping
