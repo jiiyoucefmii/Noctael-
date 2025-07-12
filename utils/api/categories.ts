@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+const API_URL = 'https://noctael.onrender.com'
 
 export interface Category {
   id: string;

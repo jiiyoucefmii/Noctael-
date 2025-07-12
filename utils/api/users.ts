@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Order } from './orders';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = 'https://noctael.onrender.com'
 
 export interface User {
   id?: number;
