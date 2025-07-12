@@ -15,7 +15,6 @@ export default function CartSummary() {
   const {
     items,
     subtotal,
-    shipping,
     total,
     discount,
     applyDiscount,
@@ -92,11 +91,6 @@ export default function CartSummary() {
           </div>
         )}
 
-        <div className="flex justify-between">
-          <span>Shipping</span>
-          <span>{shipping === 0 ? "Free" : `${Number(shipping).toFixed(2)} Da`}</span>
-        </div>
-
         <div className="space-y-2">
           <div className="flex gap-2">
             <Input
@@ -138,7 +132,7 @@ export default function CartSummary() {
             {Number(calculatedTotal).toFixed(2)} Da
             {discount?.amount > 0 && (
               <span className="ml-2 text-sm text-gray-500 line-through">
-                {Number(subtotal + shipping).toFixed(2)} Da
+                {Number(subtotal).toFixed(2)} Da
               </span>
             )}
           </span>

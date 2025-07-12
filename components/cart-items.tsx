@@ -16,7 +16,6 @@ export default function CartItems() {
     count, 
     subtotal, 
     discount,
-    shipping,
     total,
     cart_id,
     updateQuantity, 
@@ -72,17 +71,14 @@ export default function CartItems() {
   }
 
   const handleCheckout = () => {
-    // Prepare cart data for checkout
     const cartData = {
       cart_id: cart_id,
       subtotal,
       discount_amount: discount?.amount || 0,
       discount_code_id: discount?.code || null,
-      shipping_cost: shipping,
       total
     }
     
-    // Store in session to use during checkout
     sessionStorage.setItem('cartData', JSON.stringify(cartData))
     router.push('/checkout')
   }
@@ -225,10 +221,6 @@ export default function CartItems() {
                 <span>-{Number(discount.amount).toFixed(2)} Da</span>
               </div>
             )}
-            <div className="flex justify-between">
-              <span>Shipping</span>
-              <span>{shipping === 0 ? "Free" : `${Number(shipping).toFixed(2)} Da`}</span>
-            </div>
             <Separator />
             <div className="flex justify-between font-medium">
               <span>Total</span>
@@ -236,15 +228,12 @@ export default function CartItems() {
                 {Math.max(0, total).toFixed(2)} Da
                 {discount?.amount > 0 && (
                   <span className="ml-2 text-sm text-gray-500 line-through">
-                    {Number(subtotal + shipping).toFixed(2)} Da
+                    {Number(subtotal).toFixed(2)} Da
                   </span>
                 )}
               </span>
             </div>
           </div>
-          <p className="mt-2 text-sm text-gray-500">
-            Taxes calculated at checkout
-          </p>
           <Button
             className="mt-6 w-full"
             onClick={handleCheckout}

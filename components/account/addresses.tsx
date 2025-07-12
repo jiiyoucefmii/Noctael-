@@ -1,9 +1,10 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Edit, Trash } from "lucide-react";
+import { useEffect, useState } from "react"
+import { Plus, Edit, Trash } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -12,10 +13,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+
 import {
   getUserAddresses,
   deleteAddress,
@@ -23,11 +25,14 @@ import {
   createAddress,
   updateAddress,
   type Address,
-} from "@/utils/api/addresses";
+} from "@/utils/api/addresses"
+
+import { getAllShippingOptions, type ShippingOption } from "@/utils/api/shippingOptions"
 
 export default function AccountAddresses() {
-  const [userAddresses, setUserAddresses] = useState<Address[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [userAddresses, setUserAddresses] = useState<Address[]>([])
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState<Omit<Address, 'user_id' | 'created_at' | 'updated_at'>>({
     id: undefined,
     name: "",
@@ -35,30 +40,34 @@ export default function AccountAddresses() {
     city: "",
     state: "",
     zip: "",
-    country: "",
-  });
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
+    country: "Algeria",
+  })
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
-    const fetchAddresses = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getUserAddresses();
-        setUserAddresses(response.addresses || []);
+        const [addressesRes, shippingRes] = await Promise.all([
+          getUserAddresses(),
+          getAllShippingOptions()
+        ])
+        setUserAddresses(addressesRes.addresses || [])
+        setShippingOptions(shippingRes || [])
       } catch (err: any) {
-        toast({ title: "Error", description: err.message, variant: "destructive" });
+        toast({ title: "Error", description: err.message, variant: "destructive" })
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchAddresses();
-  }, [toast]);
+    fetchData()
+  }, [toast])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
-  };
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { id, value } = e.target
+    setFormData((prev) => ({ ...prev, [id]: value }))
+  }
 
   const resetForm = () => {
     setFormData({
@@ -68,63 +77,63 @@ export default function AccountAddresses() {
       city: "",
       state: "",
       zip: "",
-      country: "",
-    });
-  };
+      country: "Algeria",
+    })
+  }
 
   const handleDialogClose = () => {
-    resetForm();
-    setIsDialogOpen(false);
-  };
+    resetForm()
+    setIsDialogOpen(false)
+  }
 
   const handleSubmit = async () => {
     try {
       if (formData.id) {
-        const { address } = await updateAddress(formData.id, formData);
-        setUserAddresses((prev) =>
-          prev.map((a) => (a.id === address.id ? address : a))
-        );
-        toast({ title: "Address updated", description: "Address changes saved." });
+        const { address } = await updateAddress(formData.id, formData)
+        setUserAddresses((prev) => prev.map((a) => (a.id === address.id ? address : a)))
+        toast({ title: "Address updated", description: "Address changes saved." })
       } else {
-        const { address } = await createAddress(formData);
-        setUserAddresses((prev) => [...prev, address]);
-        toast({ title: "Address added", description: "Your new address has been saved." });
+        const { address } = await createAddress(formData)
+        setUserAddresses((prev) => [...prev, address])
+        toast({ title: "Address added", description: "Your new address has been saved." })
       }
-      handleDialogClose();
+      handleDialogClose()
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: err.message, variant: "destructive" })
     }
-  };
+  }
 
   const handleEdit = (address: Address) => {
-    setFormData(address);
-    setIsDialogOpen(true);
-  };
+    setFormData({ ...address, country: "Algeria" }) // Enforce Algeria on edit
+    setIsDialogOpen(true)
+  }
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteAddress(id);
-      setUserAddresses((prev) => prev.filter((a) => a.id !== id));
-      toast({ title: "Address deleted", description: "The address has been deleted successfully." });
+      await deleteAddress(id)
+      setUserAddresses((prev) => prev.filter((a) => a.id !== id))
+      toast({ title: "Address deleted", description: "The address has been deleted successfully." })
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: err.message, variant: "destructive" })
     }
-  };
+  }
 
   const handleSetDefault = async (id: string) => {
     try {
-      await setDefaultAddress(id);
+      await setDefaultAddress(id)
       setUserAddresses((prev) =>
         prev.map((address) => ({
           ...address,
           is_default: address.id === id,
         }))
-      );
-      toast({ title: "Default address updated", description: "Your default address has been updated." });
+      )
+      toast({ title: "Default address updated", description: "Your default address has been updated." })
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: err.message, variant: "destructive" })
     }
-  };
+  }
+
+  const uniqueStates = [...new Set(shippingOptions.map(option => option.state))]
 
   return (
     <Card>
@@ -148,12 +157,42 @@ export default function AccountAddresses() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              {["name", "address", "city", "state", "zip", "country"].map((field) => (
-                <div key={field} className="space-y-2">
-                  <Label htmlFor={field}>{field.charAt(0).toUpperCase() + field.slice(1)}</Label>
-                  <Input id={field} value={(formData as any)[field]} onChange={handleInputChange} />
-                </div>
-              ))}
+              <div className="space-y-2">
+                <Label htmlFor="country">Country</Label>
+                <Input id="country" value="Algeria" disabled />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="state">State</Label>
+                <select
+                  id="state"
+                  value={formData.state}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">Select a state</option>
+                  {uniqueStates.map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input id="city" value={formData.city} onChange={handleInputChange} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input id="address" value={formData.address} onChange={handleInputChange} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="zip">Zip Code</Label>
+                <Input id="zip" value={formData.zip} onChange={handleInputChange} />
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" onClick={handleSubmit}>
@@ -163,6 +202,7 @@ export default function AccountAddresses() {
           </DialogContent>
         </Dialog>
       </CardHeader>
+
       <CardContent>
         {loading ? (
           <p>Loading...</p>
@@ -209,5 +249,5 @@ export default function AccountAddresses() {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

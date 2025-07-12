@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast"
 
 import {
-  createProduct, getProducts, deleteProduct, type Product,
+  createProduct, getProducts, deleteProduct, updateProduct, getProductById, type Product, type ProductVariant,
 } from "@/utils/api/products"
 import { getCategories, createCategory, type Category } from "@/utils/api/categories"
 import { uploadVariantImages } from "@/utils/api/upload"
@@ -26,6 +26,7 @@ export default function AdminProducts() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const { toast } = useToast()
 
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
@@ -42,12 +43,14 @@ export default function AdminProducts() {
   })
 
   const [newVariant, setNewVariant] = useState({
+    id: "",
     color: "",
     size: "",
     price: 0,
     sale_price: 0,
     stock: 0,
     images: [] as File[],
+    existingImages: [] as { image_url: string }[],
   })
 
   const [variantList, setVariantList] = useState<typeof newVariant[]>([])
@@ -56,17 +59,76 @@ export default function AdminProducts() {
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryParent, setNewCategoryParent] = useState("")
+  const [isEditing, setIsEditing] = useState(false)
+  const [editProductId, setEditProductId] = useState<string | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
+  const resetForm = () => {
+    setNewProduct({
+      name: "",
+      description: "",
+      category_id: "",
+      gender: "unisex",
+      is_new: false,
+      is_featured: false,
+      is_on_sale: false,
+      variants: [],
+      colors: [],
+      sizes: [],
+    })
+    setNewVariant({
+      id: "",
+      color: "",
+      size: "",
+      price: 0,
+      sale_price: 0,
+      stock: 0,
+      images: [],
+      existingImages: [],
+    })
+    setVariantList([])
+    setIsEditing(false)
+    setEditProductId(null)
+  }
 
   const handleAddVariant = () => {
     setVariantList([...variantList, { ...newVariant }])
-    setNewVariant({ color: "", size: "", price: 0, sale_price: 0, stock: 0, images: [] })
+    setNewVariant({
+      id: "",
+      color: "",
+      size: "",
+      price: 0,
+      sale_price: 0,
+      stock: 0,
+      images: [],
+      existingImages: [],
+    })
+  }
+
+  const handleRemoveVariant = (index: number) => {
+    const newList = [...variantList]
+    newList.splice(index, 1)
+    setVariantList(newList)
+  }
+
+  const handleRemoveVariantImage = (variantIndex: number, imageIndex: number) => {
+    const newList = [...variantList]
+    newList[variantIndex].images.splice(imageIndex, 1)
+    setVariantList(newList)
   }
 
   const handleAddProduct = async () => {
     try {
       const productData: Partial<Product> = {
         ...newProduct,
-        variants: variantList.map((v) => ({ ...v, images: [] })),
+        variants: variantList.map((v) => ({
+          color: v.color,
+          size: v.size,
+          price: Number(v.price),
+          sale_price: Number(v.sale_price),
+          stock: Number(v.stock),
+          images: [],
+        })),
         colors: variantList.map((v) => v.color),
         sizes: variantList.map((v) => v.size),
       }
@@ -86,27 +148,102 @@ export default function AdminProducts() {
 
       setProductList((prev) => [...prev, createdProduct])
       toast({ title: "Product added", description: "New product has been successfully created." })
-
-      setNewProduct({
-        name: "",
-        description: "",
-        category_id: "",
-        gender: "unisex",
-        is_new: false,
-        is_featured: false,
-        is_on_sale: false,
-        variants: [],
-        colors: [],
-        sizes: [],
-      })
-      setNewVariant({ color: "", size: "", price: 0, sale_price: 0, stock: 0, images: [] })
-      setVariantList([])
+      resetForm()
+      setDialogOpen(false)
 
     } catch (err) {
       console.error(err)
       toast({
         title: "Error",
         description: "Failed to create product. Try again later.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleUpdateProduct = async () => {
+    if (!editProductId) return
+    
+    try {
+      const productData: Partial<Product> = {
+        ...newProduct,
+        variants: variantList.map((v) => ({
+          id: v.id,
+          color: v.color,
+          size: v.size,
+          price: Number(v.price),
+          sale_price: Number(v.sale_price),
+          stock: Number(v.stock),
+          images: [],
+        })),
+        colors: variantList.map((v) => v.color),
+        sizes: variantList.map((v) => v.size),
+      }
+
+      const updated = await updateProduct(editProductId, productData)
+      const updatedProduct = updated.product
+
+      for (const variant of variantList) {
+        if (variant.images?.length > 0 && variant.id) {
+          await uploadVariantImages(variant.id, variant.images)
+        }
+      }
+
+      setProductList((prev) => 
+        prev.map(p => p.id === editProductId ? updatedProduct : p)
+      )
+      toast({ title: "Product updated", description: "Product has been successfully updated." })
+      resetForm()
+      setDialogOpen(false)
+
+    } catch (err) {
+      console.error(err)
+      toast({
+        title: "Error",
+        description: "Failed to update product. Try again later.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleEditProduct = async (productId: string) => {
+    try {
+      const product = await getProductById(productId)
+      
+      setNewProduct({
+        name: product.name,
+        description: product.description,
+        category_id: product.category_id,
+        gender: product.gender,
+        is_new: product.is_new,
+        is_featured: product.is_featured,
+        is_on_sale: product.is_on_sale,
+        variants: product.variants,
+        colors: product.colors,
+        sizes: product.sizes,
+      })
+
+      const variantsWithFiles = product.variants.map(v => ({
+        id: v.id,
+        color: v.color,
+        size: v.size,
+        price: Number(v.price),
+        sale_price: Number(v.sale_price) || 0,
+        stock: Number(v.stock),
+        images: [] as File[],
+        existingImages: v.images || [],
+      }))
+
+      setVariantList(variantsWithFiles)
+      setIsEditing(true)
+      setEditProductId(productId)
+      setDialogOpen(true)
+
+    } catch (err) {
+      console.error(err)
+      toast({
+        title: "Error",
+        description: "Failed to load product for editing. Please try again.",
         variant: "destructive",
       })
     }
@@ -171,10 +308,11 @@ export default function AdminProducts() {
     fetchData()
   }, [toast])
 
-  const filteredProducts = productList.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category_name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredProducts = productList.filter((product) => {
+    const categoryMatch = selectedCategory === "all" || product.category_id === selectedCategory
+    const searchMatch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    return categoryMatch && searchMatch
+  })
 
   const handleDeleteClick = (id: string) => {
     setProductToDelete(id)
@@ -219,7 +357,10 @@ export default function AdminProducts() {
 
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Products</h1>
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open)
+          if (!open) resetForm()
+        }}>
           <DialogTrigger asChild>
             <Button className="text-base px-4 py-2">
               <Plus className="mr-2 h-5 w-5" /> Add Product
@@ -227,13 +368,23 @@ export default function AdminProducts() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
             <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
-              <DialogDescription>Enter product details below.</DialogDescription>
+              <DialogTitle>{isEditing ? "Edit Product" : "Add New Product"}</DialogTitle>
+              <DialogDescription>
+                {isEditing ? "Update product details below." : "Enter product details below."}
+              </DialogDescription>
             </DialogHeader>
 
             <div className="overflow-y-auto flex-1 space-y-4 py-4 px-1">
-              <Input placeholder="Product Name" value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} />
-              <Input placeholder="Description" value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} />
+              <Input 
+                placeholder="Product Name" 
+                value={newProduct.name} 
+                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} 
+              />
+              <Input 
+                placeholder="Description" 
+                value={newProduct.description} 
+                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} 
+              />
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -316,7 +467,7 @@ export default function AdminProducts() {
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    checked={newProduct.is_new}
+                    checked={newProduct.is_new || false}
                     onChange={(e) => setNewProduct({ ...newProduct, is_new: e.target.checked })}
                   />
                   <span className="text-sm">New</span>
@@ -325,7 +476,7 @@ export default function AdminProducts() {
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    checked={newProduct.is_featured}
+                    checked={newProduct.is_featured || false}
                     onChange={(e) => setNewProduct({ ...newProduct, is_featured: e.target.checked })}
                   />
                   <span className="text-sm">Featured</span>
@@ -334,7 +485,7 @@ export default function AdminProducts() {
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    checked={newProduct.is_on_sale}
+                    checked={newProduct.is_on_sale || false}
                     onChange={(e) => setNewProduct({ ...newProduct, is_on_sale: e.target.checked })}
                   />
                   <span className="text-sm">On Sale</span>
@@ -367,7 +518,7 @@ export default function AdminProducts() {
                   <Input
                     type="number"
                     value={newVariant.price}
-                    onChange={(e) => setNewVariant({ ...newVariant, price: +e.target.value })}
+                    onChange={(e) => setNewVariant({ ...newVariant, price: Number(e.target.value) })}
                     className="w-full"
                   />
                 </div>
@@ -377,7 +528,7 @@ export default function AdminProducts() {
                   <Input
                     type="number"
                     value={newVariant.sale_price}
-                    onChange={(e) => setNewVariant({ ...newVariant, sale_price: +e.target.value })}
+                    onChange={(e) => setNewVariant({ ...newVariant, sale_price: Number(e.target.value) })}
                     className="w-full"
                   />
                 </div>
@@ -387,7 +538,7 @@ export default function AdminProducts() {
                   <Input
                     type="number"
                     value={newVariant.stock}
-                    onChange={(e) => setNewVariant({ ...newVariant, stock: +e.target.value })}
+                    onChange={(e) => setNewVariant({ ...newVariant, stock: Number(e.target.value) })}
                     className="w-full"
                   />
                 </div>
@@ -412,25 +563,43 @@ export default function AdminProducts() {
                     <p className="text-xs text-gray-400">Only images supported</p>
                   </div>
 
-                  {newVariant.images?.length > 0 && (
+                  {(newVariant.images?.length > 0 || newVariant.existingImages?.length > 0) && (
                     <div className="flex flex-wrap gap-2 pt-2">
-                      {newVariant.images.map((file, index) => (
-                        <div
-                          key={index}
-                          className="w-20 h-20 border rounded-md overflow-hidden"
-                        >
+                      {newVariant.existingImages?.map((file, index) => (
+                        <div key={`existing-${index}`} className="relative w-20 h-20 border rounded-md overflow-hidden">
+                          <img
+                            src={`${process.env.NEXT_PUBLIC_API_URL}${file.image_url}`}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ))}
+                      {newVariant.images?.map((file, index) => (
+                        <div key={`new-${index}`} className="relative w-20 h-20 border rounded-md overflow-hidden group">
                           <img
                             src={URL.createObjectURL(file)}
                             alt={`Preview ${index + 1}`}
                             className="w-full h-full object-cover"
                           />
+                          <button
+                            type="button"
+                            className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleRemoveVariantImage(variantList.length, index)}
+                          >
+                            <Trash className="h-5 w-5 text-white" />
+                          </button>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
 
-                <Button type="button" onClick={handleAddVariant} className="col-span-2">
+                <Button 
+                  type="button" 
+                  onClick={handleAddVariant} 
+                  className="col-span-2"
+                  disabled={!newVariant.color || !newVariant.size || !newVariant.price}
+                >
                   Add Variant
                 </Button>
               </div>
@@ -438,19 +607,42 @@ export default function AdminProducts() {
               {variantList.length > 0 && (
                 <div className="space-y-3">
                   {variantList.map((v, i) => (
-                    <div key={i} className="border p-3 rounded-md bg-gray-50 space-y-2">
+                    <div key={i} className="border p-3 rounded-md bg-gray-50 space-y-2 relative">
+                      <button
+                        type="button"
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                        onClick={() => handleRemoveVariant(i)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </button>
                       <div className="text-sm font-medium">
                         {v.size} / {v.color} - ${v.price} {v.sale_price > 0 && `(Sale: $${v.sale_price})`} | Stock: {v.stock}
                       </div>
-                      {v.images?.length > 0 && (
+                      {(v.images?.length > 0 || v.existingImages?.length > 0) && (
                         <div className="flex flex-wrap gap-2">
-                          {v.images.map((file, idx) => (
-                            <div key={idx} className="w-20 h-20 border rounded-md overflow-hidden">
+                          {v.existingImages?.map((file, idx) => (
+                            <div key={`existing-${idx}`} className="relative w-20 h-20 border rounded-md overflow-hidden">
+                              <img
+                                src={`${process.env.NEXT_PUBLIC_API_URL}${file.image_url}`}
+                                alt={`Preview ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ))}
+                          {v.images?.map((file, idx) => (
+                            <div key={`new-${idx}`} className="relative w-20 h-20 border rounded-md overflow-hidden group">
                               <img
                                 src={URL.createObjectURL(file)}
                                 alt={`Preview ${idx + 1}`}
                                 className="w-full h-full object-cover"
                               />
+                              <button
+                                type="button"
+                                className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => handleRemoveVariantImage(i, idx)}
+                              >
+                                <Trash className="h-5 w-5 text-white" />
+                              </button>
                             </div>
                           ))}
                         </div>
@@ -462,21 +654,51 @@ export default function AdminProducts() {
             </div>
 
             <DialogFooter className="pt-4 border-t">
-              <Button onClick={handleAddProduct}>Save Product</Button>
+              {isEditing ? (
+                <Button onClick={handleUpdateProduct}>Update Product</Button>
+              ) : (
+                <Button onClick={handleAddProduct}>Save Product</Button>
+              )}
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="mb-6 relative">
-        <Search className="absolute left-3 top-3 h-5 w-5 text-gray-500" />
-        <Input
-          type="search"
-          placeholder="Search by name or category..."
-          className="pl-10 py-3 text-base"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="w-full sm:w-64">
+            <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-1">
+              Filter by Category
+            </label>
+            <select
+              id="category-filter"
+              className="w-full p-2 border rounded-md"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label htmlFor="product-search" className="block text-sm font-medium text-gray-700 mb-1">
+              Search Products
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-5 w-5 text-gray-500" />
+              <Input
+                id="product-search"
+                type="search"
+                placeholder={`Search by name${selectedCategory !== 'all' ? ' in selected category' : ''}...`}
+                className="pl-10 py-3 text-base"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="rounded-lg border overflow-x-auto">
@@ -499,7 +721,11 @@ export default function AdminProducts() {
               </TableRow>
             ) : filteredProducts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-lg">No products found.</TableCell>
+                <TableCell colSpan={7} className="h-24 text-center text-lg">
+                  {searchTerm || selectedCategory !== "all" 
+                    ? "No products match your search criteria" 
+                    : "No products found"}
+                </TableCell>
               </TableRow>
             ) : (
               filteredProducts.map((product) => {
@@ -549,9 +775,9 @@ export default function AdminProducts() {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                       <p><strong>Size:</strong> {variant.size}</p>
                                       <p><strong>Color:</strong> {variant.color}</p>
-                                      <p><strong>Price:</strong> ${variant.price.toFixed(2)}</p>
+                                      <p><strong>Price:</strong> ${Number(variant.price).toFixed(2)}</p>
                                       {variant.sale_price != null && variant.sale_price > 0 && (
-                                        <p><strong>Sale Price:</strong> ${variant.sale_price.toFixed(2)}</p>
+                                        <p><strong>Sale Price:</strong> ${Number(variant.sale_price).toFixed(2)}</p>
                                       )}
                                       <p><strong>Stock:</strong> {variant.stock}</p>
                                     </div>
@@ -583,10 +809,18 @@ export default function AdminProducts() {
                       </Dialog>
                     </TableCell>
                     <TableCell className="text-right space-x-1">
-                      <Button variant="ghost" size="icon">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleEditProduct(product.id)}
+                      >
                         <Edit className="h-5 w-5" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(product.id)}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => handleDeleteClick(product.id)}
+                      >
                         <Trash className="h-5 w-5 text-red-500" />
                       </Button>
                     </TableCell>

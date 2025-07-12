@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, Search, ShoppingBag, User, X } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +17,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useCart } from "@/hooks/use-cart"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
+import { logoutUser } from "@/utils/api/users"
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -24,8 +31,9 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const { items } = useCart()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, setIsAuthenticated } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,6 +43,16 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser()
+      setIsAuthenticated(false)
+      router.push("/")
+    } catch (error) {
+      console.error("Logout failed:", error)
+    }
+  }
 
   return (
     <header
@@ -167,12 +185,37 @@ export default function Header() {
             )}
           </div>
           
-          <Link href="/account">
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-              <span className="sr-only">Account</span>
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
+                  <span className="sr-only">Account</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link href="/account" className="w-full cursor-pointer">
+                    Go to Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link href="/auth/login">
+              <Button variant="ghost" size="icon">
+                <User className="h-5 w-5" />
+                <span className="sr-only">Account</span>
+              </Button>
+            </Link>
+          )}
+          
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingBag className="h-5 w-5" />

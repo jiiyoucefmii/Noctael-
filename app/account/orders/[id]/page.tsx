@@ -1,152 +1,161 @@
+// app/account/orders/[id]/page.tsx
+
 import Link from "next/link"
 import Image from "next/image"
 import { ChevronLeft, Package } from "lucide-react"
+import { getOrderById } from "@/utils/api/orders"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 
-export default function OrderDetailsPage({ params }: { params: { id: string } }) {
-  // Mock order data
-  const order = {
-    id: params.id,
-    date: "June 15, 2023",
-    status: "Delivered",
-    total: 149.99,
-    subtotal: 129.99,
+interface OrderDetailsPageProps {
+  params: { id: string }
+}
 
-    items: [
-      {
-        id: "1",
-        name: "Shadow Oversized Tee",
-        price: 49.99,
-        quantity: 1,
-        size: "L",
-        image: "/images/product-1.jpg",
-      },
-      {
-        id: "2",
-        name: "Midnight Hoodie",
-        price: 79.99,
-        quantity: 1,
-        size: "M",
-        image: "/images/product-2.jpg",
-      },
-    ],
-    shippingAddress: {
-      name: "John Doe",
-      address: "123 Main Street",
-      city: "New York",
-      state: "NY",
-      zip: "10001",
+export default async function OrderDetailsPage({ params }: OrderDetailsPageProps) {
+  const { order } = await getOrderById(params.id)
 
-      
-    },
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
 
+  const formatPrice = (amount: number | string) =>
+    `$${Number(amount).toFixed(2)}`
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-500"
+      case "accepted":
+        return "bg-green-500"
+      case "shipped":
+        return "bg-blue-500"
+      default:
+        return "bg-gray-500"
+    }
   }
 
   return (
     <main className="flex-1 py-10">
       <div className="container max-w-4xl">
-        <div className="mb-6">
+        {/* Header */}
+        <div className="mb-8">
           <Button asChild variant="ghost" className="mb-4">
             <Link href="/account?tab=orders">
               <ChevronLeft className="mr-2 h-4 w-4" />
               Back to Orders
             </Link>
           </Button>
-          <h1 className="text-3xl font-bold">Order #{order.id}</h1>
-          <p className="text-gray-500">Placed on {order.date}</p>
+          <h1 className="text-3xl font-bold mb-1">Order #{order.id.slice(0, 8)}</h1>
+          <p className="text-sm text-muted-foreground">Placed on {formatDate(order.created_at)}</p>
         </div>
 
+        {/* Main grid */}
         <div className="grid gap-6 md:grid-cols-3">
+          {/* Left side */}
           <div className="md:col-span-2 space-y-6">
+            {/* Order Status */}
             <Card>
               <CardHeader>
                 <CardTitle>Order Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-4">
-                  <div className="rounded-full bg-green-100 p-2">
-                    <Package className="h-6 w-6 text-green-600" />
+                <div className="flex items-center gap-4">
+                  <div className="rounded-full bg-muted p-2">
+                    <Package className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <Badge className="bg-green-500">Delivered</Badge>
-                    <p className="mt-1 text-sm text-gray-500">Your order has been delivered on June 18, 2023</p>
+                    <Badge className={`capitalize ${getStatusColor(order.status)}`}>
+                      {order.status}
+                    </Badge>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Last updated: {formatDate(order.updated_at)}
+                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
+            {/* Order Items */}
             <Card>
               <CardHeader>
-                <CardTitle>Order Items</CardTitle>
+                <CardTitle>Items</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="divide-y">
-                  {order.items.map((item) => (
-                    <div key={item.id} className="flex py-4">
-                      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md">
-                        <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-cover" />
-                      </div>
-                      <div className="ml-4 flex flex-1 flex-col">
-                        <div className="flex justify-between">
-                          <div>
-                            <h3 className="font-medium">
-                              <Link href={`/products/${item.id}`} className="hover:underline">
-                                {item.name}
-                              </Link>
-                            </h3>
-                            <p className="mt-1 text-sm text-gray-500">Size: {item.size}</p>
-                          </div>
-                          <p className="font-medium">${item.price.toFixed(2)}</p>
-                        </div>
-                        <div className="mt-1 text-sm text-gray-500">Quantity: {item.quantity}</div>
-                      </div>
+              <CardContent className="divide-y">
+                {order.items.map((item) => (
+                  <div key={item.id} className="flex gap-4 py-4">
+                    <div className="relative h-20 w-20 rounded-md overflow-hidden flex-shrink-0">
+                      <Image
+                        src={item.image || "/placeholder.svg"}
+                        alt={item.product_name}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
-                  ))}
-                </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between">
+                        <div>
+                          <h3 className="font-medium">
+                            <Link href={`/products/${item.product_id}`} className="hover:underline">
+                              {item.product_name}
+                            </Link>
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            Size: {item.size} | Color: {item.color}
+                          </p>
+                        </div>
+                        <p className="font-medium">{formatPrice(item.price)}</p>
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </div>
 
+          {/* Right side */}
           <div className="space-y-6">
+            {/* Order Summary */}
             <Card>
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle>Summary</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>${order.subtotal.toFixed(2)}</span>
+                  <span>{formatPrice(order.subtotal)}</span>
                 </div>
-                
-                <div className="border-t pt-4 flex justify-between font-medium">
+                {order.discount_amount && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount</span>
+                    <span>-{formatPrice(order.discount_amount)}</span>
+                  </div>
+                )}
+                <div className="border-t pt-3 flex justify-between font-medium text-base">
                   <span>Total</span>
-                  <span>${order.total.toFixed(2)}</span>
+                  <span>{formatPrice(order.total)}</span>
                 </div>
+                <div className="pt-2 text-xs text-muted-foreground">Payment Method: Payment on Delivery</div>
               </CardContent>
             </Card>
 
+            {/* Shipping Info */}
             <Card>
               <CardHeader>
-                <CardTitle>Shipping Information</CardTitle>
+                <CardTitle>Shipping Address</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="font-medium">{order.shippingAddress.name}</p>
-                <p className="text-gray-500">{order.shippingAddress.address}</p>
-                <p className="text-gray-500">
-                  {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zip}
+              <CardContent className="text-sm space-y-1">
+                <p className="font-medium">{order.first_name} {order.last_name}</p>
+                <p className="text-muted-foreground">{order.shipping_address}</p>
+                <p className="text-muted-foreground">
+                  {order.shipping_city}, {order.shipping_state} {order.shipping_zip}
                 </p>
-
+                <p className="text-muted-foreground">{order.shipping_country}</p>
               </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <p>Payment On Delivery</p>
-              </CardHeader>
-          
             </Card>
           </div>
         </div>

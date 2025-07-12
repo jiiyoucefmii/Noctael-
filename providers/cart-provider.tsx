@@ -1,25 +1,28 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect } from "react"
-import type { Product } from "@/utils/api/products"
-import { 
+import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import {
   getCart as apiGetCart,
   addToCart as apiAddToCart,
   updateCartItem as apiUpdateCartItem,
   removeFromCart as apiRemoveFromCart,
   clearCart as apiClearCart,
-  transferGuestCart,
   type CartItem as ApiCartItem,
   type Cart as ApiCart
 } from "@/utils/api/cart"
+
+import { getShippingOptionsByState } from "@/utils/api/shippingOptions"
 
 interface CartContextType {
   items: ApiCartItem[]
   count: number
   subtotal: number
   shipping: number
+  shippingType: "to_home" | "to_desk"
+  shippingState: string | null
+  shippingOptions: any[]
   total: number
-  cart_id: string | null 
+  cart_id: string | null
   discount?: {
     code: string
     percent: number
@@ -32,90 +35,95 @@ interface CartContextType {
   clearCart: () => Promise<void>
   applyDiscount: (discount: { code: string; percent: number; amount: number }) => void
   removeDiscount: () => void
+  setShippingState: (state: string) => Promise<void>
+  setShippingType: (type: "to_home" | "to_desk") => void
 }
 
 export const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<ApiCart | null>(null)
-  const [discount, setDiscount] = useState<CartContextType['discount']>(null)
+  const [discount, setDiscount] = useState<CartContextType["discount"]>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [shippingState, setShippingState] = useState<string | null>(null)
+  const [shippingType, setShippingType] = useState<"to_home" | "to_desk">("to_home")
+  const [shippingOptions, setShippingOptions] = useState<any[]>([])
 
-  // Load cart from API on mount
-  const loadCart = async () => {
+  const loadCart = useCallback(async () => {
     try {
       setIsLoading(true)
       const apiCart = await apiGetCart()
       setCart(apiCart)
     } catch (error) {
       console.error("Failed to load cart:", error)
-      // Fallback to empty cart if API fails
-      setCart({
-        cart_id: 'local-cart',
-        items: [],
-        count: 0,
-        subtotal: 0
-      })
+      setCart({ cart_id: "local-cart", items: [], count: 0, subtotal: 0 })
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
+
+  const updateShippingState = useCallback(async (state: string) => {
+    try {
+      setIsLoading(true)
+      const options = await getShippingOptionsByState(state)
+      setShippingOptions(options)
+      setShippingState(state)
+    } catch (error) {
+      console.error("Failed to fetch shipping options:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     loadCart()
-  }, [])
+  }, [loadCart])
 
-  const addToCart = async (variant_id: string, quantity = 1) => {
+  const addToCart = useCallback(async (variant_id: string, quantity = 1) => {
     try {
       setIsLoading(true)
-      const { cart_item } = await apiAddToCart(variant_id, quantity)
-      await loadCart() // Refresh cart after adding
+      await apiAddToCart(variant_id, quantity)
+      await loadCart()
     } catch (error) {
       console.error("Failed to add to cart:", error)
       throw error
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [loadCart])
 
-  const updateQuantity = async (cart_item_id: string, quantity: number) => {
+  const updateQuantity = useCallback(async (cart_item_id: string, quantity: number) => {
     if (quantity < 1) return
-
     try {
       setIsLoading(true)
       await apiUpdateCartItem(cart_item_id, quantity)
-      await loadCart() // Refresh cart after updating
+      await loadCart()
     } catch (error) {
       console.error("Failed to update quantity:", error)
       throw error
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [loadCart])
 
-  const removeFromCart = async (cart_item_id: string) => {
+  const removeFromCart = useCallback(async (cart_item_id: string) => {
     try {
       setIsLoading(true)
       await apiRemoveFromCart(cart_item_id)
-      await loadCart() // Refresh cart after removing
+      await loadCart()
     } catch (error) {
       console.error("Failed to remove item:", error)
       throw error
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [loadCart])
 
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     try {
       setIsLoading(true)
       await apiClearCart()
-      setCart({
-        cart_id: 'local-cart',
-        items: [],
-        count: 0,
-        subtotal: 0
-      })
+      setCart({ cart_id: "local-cart", items: [], count: 0, subtotal: 0 })
       setDiscount(null)
     } catch (error) {
       console.error("Failed to clear cart:", error)
@@ -123,24 +131,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
-  const applyDiscount = (discount: { code: string; percent: number; amount: number }) => {
+  const applyDiscount = useCallback((discount: { code: string; percent: number; amount: number }) => {
     setDiscount(discount)
-  }
+  }, [])
 
-  const removeDiscount = () => {
+  const removeDiscount = useCallback(() => {
     setDiscount(null)
-  }
+  }, [])
 
-  // Calculate totals
-  // In CartContext provider
-const subtotal = cart?.subtotal || 0;
-const shipping = subtotal > 100 ? 0 : 10;
-// Calculate discount amount (if any)
-const discountAmount = discount ? discount.amount : 0;
-// Ensure total never goes below 0
-const total = Math.max(0, subtotal + shipping - discountAmount);
+  const subtotal = Number(cart?.subtotal ?? 0)
+  const selectedShippingOption = shippingOptions.find(opt => opt.state === shippingState)
+  const shippingCost = Number(selectedShippingOption?.[shippingType] ?? 0)
+  const discountAmount = Number(discount?.amount ?? 0)
+  const rawTotal = subtotal + shippingCost - discountAmount
+  const total = isNaN(rawTotal) ? 0 : Math.max(0, rawTotal)
 
   return (
     <CartContext.Provider
@@ -148,7 +154,10 @@ const total = Math.max(0, subtotal + shipping - discountAmount);
         items: cart?.items || [],
         count: cart?.count || 0,
         subtotal,
-        shipping,
+        shipping: shippingCost,
+        shippingType,
+        shippingState,
+        shippingOptions,
         total,
         cart_id: cart?.cart_id || null,
         discount,
@@ -158,7 +167,9 @@ const total = Math.max(0, subtotal + shipping - discountAmount);
         removeFromCart,
         clearCart,
         applyDiscount,
-        removeDiscount
+        removeDiscount,
+        setShippingState: updateShippingState,
+        setShippingType
       }}
     >
       {children}

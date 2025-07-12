@@ -23,34 +23,35 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
+  
     try {
-      // Attempt regular user login first
+      // Try regular user login
       const user = await loginUser({ email, password })
-
+  
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.first_name || "user"}!`,
       })
-
-      router.push("/")
-    } catch (userErr: any) {
+  
+      window.location.href = "/"
+        } catch (userErr: any) {
       try {
-        // Try admin login if regular login fails
+        // Try admin login
         const admin = await adminLogin({ email, password })
-
+  
         toast({
           title: "Admin login successful",
           description: `Welcome, ${admin.name || "admin"}!`,
         })
-
-        router.push("/admin/dashboard") 
+  
+        window.location.href = "/admin"
       } catch (adminErr: any) {
-        // Both logins failed
         toast({
           title: "Login failed",
           description:
-            userErr.response?.data?.message || adminErr.message || "Something went wrong. Please try again.",
+            userErr.response?.data?.message ||
+            adminErr.message ||
+            "Something went wrong. Please try again.",
           variant: "destructive",
         })
       }
@@ -58,6 +59,7 @@ export default function LoginForm() {
       setIsLoading(false)
     }
   }
+  
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

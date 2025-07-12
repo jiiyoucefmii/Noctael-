@@ -42,5 +42,5 @@ export function useAuth() {
     };
   }, []);
 
-  return { user, isAuthenticated, isGuest, loading };
+  return { user, isAuthenticated,setIsAuthenticated, isGuest, loading };
 }
