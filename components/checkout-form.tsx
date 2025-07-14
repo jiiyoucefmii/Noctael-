@@ -320,10 +320,6 @@ export default function CheckoutForm() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="zip">ZIP</Label>
-              <Input id="zip" value={formData.zip} onChange={handleInputChange} required />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
               <Input id="country" value={formData.country} disabled />
             </div>

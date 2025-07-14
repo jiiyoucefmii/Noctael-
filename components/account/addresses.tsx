@@ -33,13 +33,12 @@ export default function AccountAddresses() {
   const [userAddresses, setUserAddresses] = useState<Address[]>([])
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
   const [loading, setLoading] = useState(true)
-  const [formData, setFormData] = useState<Omit<Address, 'user_id' | 'created_at' | 'updated_at'>>({
+  const [formData, setFormData] = useState<Omit<Address, 'user_id' | 'created_at' | 'updated_at'>>({{
     id: undefined,
     name: "",
     address: "",
     city: "",
     state: "",
-    zip: "",
     country: "Algeria",
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -76,7 +75,6 @@ export default function AccountAddresses() {
       address: "",
       city: "",
       state: "",
-      zip: "",
       country: "Algeria",
     })
   }
@@ -230,7 +228,7 @@ export default function AccountAddresses() {
                 </div>
                 <div className="mt-2 text-sm text-gray-500">
                   <p>{address.address}</p>
-                  <p>{address.city}, {address.state} {address.zip}</p>
+                  <p>{address.city}, {address.state}</p>
                   <p>{address.country}</p>
                 </div>
                 {!address.is_default && (
