@@ -247,7 +247,7 @@ export default function CheckoutForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <Card>
+      <Card className="border-0 bg-[#171717]">
         <CardHeader>
           <CardTitle>Contact Info</CardTitle>
           <CardDescription>
@@ -274,7 +274,7 @@ export default function CheckoutForm() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-0 bg-[#171717]">
         <CardHeader>
           <CardTitle>Shipping Address</CardTitle>
         </CardHeader>

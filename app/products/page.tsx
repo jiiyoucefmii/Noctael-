@@ -1,3 +1,4 @@
+// app/products/page.tsx or src/pages/ProductsPage.tsx
 import { Suspense } from "react"
 import type { Metadata } from "next"
 
@@ -16,14 +17,25 @@ export default async function ProductsPage() {
   const allProducts = await getProducts()
 
   return (
-    <main className="flex-1 py-10">
-      <div className="container mx-auto px-4">
-        <h1 className="mb-8 text-3xl font-bold text-center lg:text-left">Products</h1>
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr]">
-          <div className="lg:sticky lg:top-24 lg:h-fit">
-            <ProductFilters />
+    <main className="flex-1 bg-background min-h-screen">
+      <div className="w-full max-w-[1600px] mx-auto px-6 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2">Products</h1>
+          <p className="text-muted-foreground text-lg">Discover our premium collection</p>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 xl:gap-12">
+          {/* Sidebar Filters */}
+          <div className="lg:sticky lg:top-6 lg:h-fit">
+            <div className="bg-card rounded-xl p-6 shadow-sm" style={{ border: 'none', outline: 'none' }}>
+              <ProductFilters />
+            </div>
           </div>
-          <div>
+
+          {/* Products Grid */}
+          <div className="flex-1">
             <Suspense fallback={<ProductSkeleton />}>
               <ProductList allProducts={allProducts} />
             </Suspense>

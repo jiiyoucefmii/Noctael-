@@ -89,7 +89,7 @@ export default function AccountWishlist() {
                     <h3 className="font-medium">{item.name}</h3>
                   </Link>
                   <p className="mt-1 text-sm text-gray-500">{item.category}</p>
-                  <p className="mt-1 font-semibold">${item.price.toFixed(2)}</p>
+                  <p className="mt-1 font-semibold">{item.price.toFixed(0)} Da</p>
                 </div>
                 <div className="flex flex-col space-y-2">
                   <Button size="sm" onClick={() => handleAddToCart(item)}>

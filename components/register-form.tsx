@@ -117,11 +117,11 @@ export default function RegisterForm() {
         <Checkbox id="terms" required />
         <Label htmlFor="terms" className="text-sm font-normal">
           I agree to the{" "}
-          <Link href="/terms" className="text-black underline">
+          <Link href="/terms" className="text-white underline">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-black underline">
+          <Link href="/privacy" className="text-white underline">
             Privacy Policy
           </Link>
         </Label>

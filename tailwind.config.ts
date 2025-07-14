@@ -20,44 +20,45 @@ const config: Config = {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        // Convert your hex colors to HSL equivalents
+        border: "214 25% 27%", // #374151 (gray-700)
+        input: "220 26% 14%", // #1f2937 (gray-800)
+        ring: "262 83% 58%", // #a855f7 (purple-500)
+        background: "0 0% 4%", // #0A0A0A (new background color)
+        foreground: "210 20% 98%", // #f9fafb (gray-50)
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "262 83% 58%", // #a855f7 (purple-500)
+          foreground: "0 0% 100%", // #ffffff
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "214 25% 27%", // #374151 (gray-700)
+          foreground: "210 20% 98%", // #f9fafb (gray-50)
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "0 72% 51%", // #dc2626 (red-600)
+          foreground: "0 0% 100%", // #ffffff
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "214 25% 27%", // #374151 (gray-700)
+          foreground: "214 17% 51%", // #9ca3af (gray-400)
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "263 69% 42%", // #7c3aed (purple-600)
+          foreground: "0 0% 100%", // #ffffff
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "220 26% 14%", // #1f2937 (gray-800)
+          foreground: "210 20% 98%", // #f9fafb (gray-50)
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "220 26% 14%", // #1f2937 (gray-800)
+          foreground: "210 20% 98%", // #f9fafb (gray-50)
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "0.5rem", // matches your --radius value
+        md: "calc(0.5rem - 2px)",
+        sm: "calc(0.5rem - 4px)",
       },
       keyframes: {
         "accordion-down": {

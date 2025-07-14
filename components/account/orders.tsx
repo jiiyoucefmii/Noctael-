@@ -49,7 +49,7 @@ export default function AccountOrders() {
   };
 
   return (
-    <Card>
+    <Card className="bg-[#171717] rounded-[5px] border-0">
       <CardHeader>
         <CardTitle>Order History</CardTitle>
         <CardDescription>View and track your orders</CardDescription>
@@ -72,7 +72,7 @@ export default function AccountOrders() {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
-              <div key={order.id} className="rounded-lg border p-4">
+              <div key={order.id} className="rounded-[5px] border-0 bg-[#171717] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="font-medium">Order #{order.id}</p>

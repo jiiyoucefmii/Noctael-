@@ -39,15 +39,15 @@ export default function ProductDetails({
         <div className="mt-2 flex items-center">
           {selectedVariant?.sale_price ? (
             <>
-              <p className="text-2xl font-semibold">{Number(selectedVariant.sale_price).toFixed(2)} Da</p>
+              <p className="text-2xl font-semibold">{Number(selectedVariant.sale_price).toFixed(0)} Da</p>
               <p className="ml-2 text-lg text-gray-500 line-through">
-                {Number(selectedVariant.price).toFixed(2)} Da
+                {Number(selectedVariant.price).toFixed(0)} Da
               </p>
               <Badge className="ml-2 bg-red-600 text-white">Sale</Badge>
             </>
           ) : (
             <p className="text-2xl font-semibold">
-              {Number(selectedVariant?.price || product.price).toFixed(2)} Da
+              {Number(selectedVariant?.price || 0).toFixed(0)} Da
             </p>
           )}
           {product.is_new && <Badge className="ml-2 bg-black text-white">New</Badge>}
@@ -139,6 +139,23 @@ export default function ProductDetails({
           <p className="mt-1 text-sm text-gray-500">{availableStock} available in stock</p>
         )}
       </div>
+{/* Stock Info */}
+      <div className="rounded-lg bg-gray-50 p-4 w-fit">
+        <div className="flex items-center text-sm text-black"> {/* Added text-black class */}
+          <Truck className="mr-2 h-5 w-5 text-gray-500" />
+          {selectedVariant ? (
+            availableStock > 10 ? (
+              <span className="text-black">In Stock - Ready to Ship</span> 
+            ) : availableStock > 0 ? (
+              <span className="text-amber-600">Low Stock - Only {availableStock} left</span>
+            ) : (
+              <span className="text-red-600">Out of Stock</span>
+            )
+          ) : (
+            <span className="text-black">Select an option to see availability</span> 
+          )}
+        </div>
+      </div>
 
       {/* Add to Cart Button */}
       <div className="flex space-x-4">
@@ -165,24 +182,7 @@ export default function ProductDetails({
         </Button>
       </div>
 
-      {/* Stock Info */}
-      <div className="rounded-lg bg-gray-50 p-4">
-        <div className="flex items-center text-sm">
-          <Truck className="mr-2 h-5 w-5 text-gray-500" />
-          {selectedVariant ? (
-            availableStock > 10 ? (
-              <span>In Stock - Ready to Ship</span>
-            ) : availableStock > 0 ? (
-              <span className="text-amber-600">Low Stock - Only {availableStock} left</span>
-            ) : (
-              <span className="text-red-600">Out of Stock</span>
-            )
-          ) : (
-            <span>Select an option to see availability</span>
-          )}
-        </div>
-      </div>
-
+      
       {/* Extra Info */}
       <div className="space-y-4 border-t pt-6">
         <div>

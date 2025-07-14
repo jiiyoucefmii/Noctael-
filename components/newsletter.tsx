@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Mail } from "lucide-react"
+import { Phone } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,22 +32,26 @@ export default function Newsletter() {
 
   return (
     <div className="mx-auto max-w-2xl text-center">
-      <h3 className="text-2xl font-bold">Subscribe to Our Newsletter</h3>
-      <p className="mt-2 text-gray-300">Stay updated with the latest trends and exclusive offers.</p>
+      <h3 className="text-2xl font-bold">Join the Waitlist</h3>
+      <p className="mt-2 text-gray-300">Stay updated with the latest drops and exclusive offers.</p>
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
-          <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <Input
-            type="email"
-            placeholder="Enter your email"
+            type="tel"
+            placeholder="Enter your phone number"
             className="pl-10"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Subscribing..." : "Subscribe"}
+        <Button 
+          type="submit" 
+          disabled={isLoading}
+          className="bg-white text-black hover:bg-white/90"
+        >
+          {isLoading ? "Joining..." : "Join"}
         </Button>
       </form>
     </div>

@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Heart, ShoppingCart } from "lucide-react"
+import { Heart, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { useCart } from "@/hooks/use-cart"
@@ -20,6 +20,7 @@ export default function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const { toast } = useToast()
   const { addToCart } = useCart()
+  const [wishlistLoading, setWishlistLoading] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -41,96 +42,102 @@ export default function FeaturedProducts() {
 
   const getImageUrl = (imagePath: string) => {
     if (!imagePath) return "/placeholder.svg";
-    
-    // If the imagePath is already a full URL, return it as-is
+
     if (imagePath.startsWith('http')) return imagePath;
-    
-    // Ensure we don't have double slashes between API URL and image path
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL?.endsWith('/') 
-      ? process.env.NEXT_PUBLIC_API_URL.slice(0, -1) // Remove trailing slash if exists
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL?.endsWith('/')
+      ? process.env.NEXT_PUBLIC_API_URL.slice(0, -1)
       : process.env.NEXT_PUBLIC_API_URL;
-    
-    // Ensure image path starts with a slash
-    const cleanImagePath = imagePath.startsWith('/') 
-      ? imagePath 
+
+    const cleanImagePath = imagePath.startsWith('/')
+      ? imagePath
       : `/${imagePath}`;
-    
+
     return `${apiUrl}${cleanImagePath}`;
   }
 
-  const handleAddToCart = (product: Product) => {
-    // Use the first variant or default price
-    const price = product.variants?.[0]?.price || product.variants?.[0]?.sale_price || 0
-    addToCart({
-      ...product,
-      price,
-      image: getImageUrl(product.main_image)
-    })
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
-    })
+  const handleAddToWishlist = async (product: Product) => {
+    setWishlistLoading(product.id)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800))
+      toast({
+        title: "Added to wishlist",
+        description: `${product.name} has been added to your wishlist.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add to wishlist",
+        variant: "destructive"
+      })
+    } finally {
+      setWishlistLoading(null)
+    }
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {products.map((product) => (
-        <Card key={product.id} className="overflow-hidden group">
-          <div className="relative aspect-square">
-            <Link href={`/products/${product.id}`}>
-              <img
-                src={getImageUrl(product.main_image)}
-                alt={product.name}
-                className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/placeholder.svg"
-                }}
-              />
-            </Link>
-            {product.is_new && (
-              <Badge className="absolute right-2 top-2 bg-black text-white">New</Badge>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-10 rounded-full bg-white/80 p-1.5 text-black hover:bg-white"
-              onClick={() => {
-                toast({
-                  title: "Added to wishlist",
-                  description: `${product.name} has been added to your wishlist.`,
-                })
-              }}
-            >
-              <Heart className="h-5 w-5" />
-              <span className="sr-only">Add to wishlist</span>
-            </Button>
-          </div>
-          <CardContent className="p-4">
-            <Link href={`/products/${product.id}`} className="hover:underline">
-              <h3 className="font-medium">{product.name}</h3>
-            </Link>
-            <p className="mt-1 text-sm text-gray-500">
-              {formatGender(product.gender)}
-            </p>
-            <p className="mt-2 font-semibold">
-              ${product.variants?.[0]?.sale_price 
-                ? product.variants[0].sale_price.toFixed(2)
-                : product.variants?.[0]?.price.toFixed(2) || '0.00'}
-            </p>
-          </CardContent>
-          <CardFooter className="p-4 pt-0">
-            <Button 
-              className="w-full" 
-              asChild
-              variant={product.variants?.[0]?.stock ? "default" : "outline"}
-            >
-              <Link href={`/products/${product.id}`}>
-                {product.variants?.[0]?.stock ? "View Options" : "Out of Stock"}
+    <div className="grid grid-cols-1 gap-x-4 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {products.map((product) => {
+        const price = product.variants?.[0]?.price || 0
+        const salePrice = product.variants?.[0]?.sale_price
+        const stock = product.variants?.[0]?.stock
+
+        return (
+          <Card key={product.id} className="overflow-hidden border-0 shadow-none group relative bg-transparent hover:shadow-sm transition-all duration-300">
+            <div className="relative aspect-[3/4] bg-neutral-900/50">
+              <Link href={`/products/${product.id}`} className="block h-full">
+                <img
+                  src={getImageUrl(product.main_image)}
+                  alt={product.name}
+                  className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/placeholder.svg"
+                  }}
+                />
               </Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      ))}
+
+              {product.is_new && (
+                <Badge className="absolute bottom-2 left-2 bg-white text-black font-medium px-3 py-1 rounded-sm">NEW</Badge>
+              )}
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 rounded-full bg-white/80 text-black hover:bg-white"
+                onClick={() => handleAddToWishlist(product)}
+                disabled={wishlistLoading === product.id}
+              >
+                {wishlistLoading === product.id ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Heart className="h-5 w-5" />
+                )}
+                <span className="sr-only">Add to wishlist</span>
+              </Button>
+
+              <div className="absolute inset-0 flex items-end justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+                <Button
+                  className="w-11/12 bg-white text-black hover:bg-white/90 font-medium tracking-wide"
+                  asChild
+                  disabled={!stock}
+                >
+                  <Link href={`/products/${product.id}`}>
+                    {stock ? "View Options" : "Out of Stock"}
+                  </Link>
+                </Button>
+              </div>
+            </div>
+
+            <CardContent className="p-4 pt-5 space-y-1 text-center">
+              <h3 className="font-bold text-base line-clamp-1 text-center">{product.name}</h3>
+              <p className="text-sm text-muted-foreground font-light text-center">{formatGender(product.gender)}</p>
+              <p className="font-bold text-base pt-1 text-center">
+                {salePrice ? salePrice.toFixed(0) : price.toFixed(0)} Da
+              </p>
+            </CardContent>
+          </Card>
+        )
+      })}
     </div>
   )
 }

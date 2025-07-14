@@ -1,15 +1,10 @@
+// components/header.tsx
 "use client"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { Menu, Search, ShoppingBag, User, X } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,12 +12,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useCart } from "@/hooks/use-cart"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
-import { logoutUser } from "@/utils/api/users"
 
 const navigation = [
   { name: "Home", href: "/" },
-  { name: "Men", href: "/products?gender=men" },
-  { name: "Women", href: "/products?gender=women" },
   { name: "New Arrivals", href: "/products?new=true" },
   { name: "Sale", href: "/products?sale=true" },
 ]
@@ -31,9 +23,8 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const pathname = usePathname()
-  const router = useRouter()
   const { items } = useCart()
-  const { isAuthenticated, setIsAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,21 +35,13 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const handleLogout = async () => {
-    try {
-      await logoutUser()
-      setIsAuthenticated(false)
-      router.push("/")
-    } catch (error) {
-      console.error("Logout failed:", error)
-    }
-  }
-
   return (
     <header
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
-        isScrolled ? "bg-white shadow-md" : "bg-transparent",
+        isScrolled 
+          ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border" 
+          : "bg-transparent",
       )}
     >
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -70,14 +53,14 @@ export default function Header() {
               <span className="sr-only">Open menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[300px]">
+          <SheetContent side="left" className="w-[300px] bg-background">
             <div className="flex h-full flex-col">
-              <div className="flex items-center justify-between border-b py-4">
+              <div className="flex items-center justify-between border-b border-border py-4">
                 <Link href="/" className="flex items-center">
                   <img 
                     src="/logo.svg" 
                     alt="Noctael" 
-                    className="h-8 w-auto"
+                    className="h-8 w-auto filter invert dark:invert-0"
                   />
                 </Link>
               </div>
@@ -87,7 +70,10 @@ export default function Header() {
                     <li key={item.name}>
                       <Link
                         href={item.href}
-                        className={cn("block py-2 text-lg", pathname === item.href ? "font-medium" : "text-gray-600")}
+                        className={cn(
+                          "block py-2 text-lg transition-colors hover:text-primary", 
+                          pathname === item.href ? "font-medium text-primary" : "text-muted-foreground"
+                        )}
                       >
                         {item.name}
                       </Link>
@@ -95,23 +81,23 @@ export default function Header() {
                   ))}
                 </ul>
               </div>
-              <div className="border-t py-4">
+              <div className="border-t border-border py-4">
                 <div className="flex flex-col space-y-2">
                   {!isAuthenticated && (
                     <>
-                      <Link href="/auth/login" className="block py-2 text-lg">
+                      <Link href="/auth/login" className="block py-2 text-lg hover:text-primary transition-colors">
                         Login
                       </Link>
-                      <Link href="/auth/register" className="block py-2 text-lg">
+                      <Link href="/auth/register" className="block py-2 text-lg hover:text-primary transition-colors">
                         Register
                       </Link>
                     </>
                   )}
-                  <Link href="/account" className="flex items-center py-2">
+                  <Link href="/account" className="flex items-center py-2 hover:text-primary transition-colors">
                     <User className="mr-2 h-5 w-5" />
                     My Account
                   </Link>
-                  <Link href="/cart" className="flex items-center py-2">
+                  <Link href="/cart" className="flex items-center py-2 hover:text-primary transition-colors">
                     <ShoppingBag className="mr-2 h-5 w-5" />
                     Cart ({items.length})
                   </Link>
@@ -127,7 +113,7 @@ export default function Header() {
             <img 
               src="/logo.svg" 
               alt="Noctael" 
-              className="h-8 w-auto"
+              className="h-8 w-auto filter invert dark:invert-0"
             />
           </Link>
         </div>
@@ -140,8 +126,8 @@ export default function Header() {
                 <Link
                   href={item.href}
                   className={cn(
-                    "text-sm font-medium transition-colors hover:text-gray-900",
-                    pathname === item.href ? "text-black" : "text-gray-600",
+                    "text-sm font-medium transition-colors hover:text-primary",
+                    pathname === item.href ? "text-primary" : "text-muted-foreground",
                   )}
                 >
                   {item.name}
@@ -154,8 +140,13 @@ export default function Header() {
         {/* Actions */}
         <div className="flex items-center space-x-4">
           {isSearchOpen ? (
-            <div className="absolute inset-x-0 top-0 z-10 flex h-16 items-center bg-white px-4">
-              <Input type="search" placeholder="Search for products..." className="flex-1" autoFocus />
+            <div className="absolute inset-x-0 top-0 z-10 flex h-16 items-center bg-background px-4 border-b border-border">
+              <Input 
+                type="search" 
+                placeholder="Search for products..." 
+                className="flex-1 bg-background border-input" 
+                autoFocus 
+              />
               <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(false)} className="ml-2">
                 <X className="h-5 w-5" />
                 <span className="sr-only">Close search</span>
@@ -185,42 +176,17 @@ export default function Header() {
             )}
           </div>
           
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <User className="h-5 w-5" />
-                  <span className="sr-only">Account</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem asChild>
-                  <Link href="/account" className="w-full cursor-pointer">
-                    Go to Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleLogout}
-                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                >
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Link href="/auth/login">
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-                <span className="sr-only">Account</span>
-              </Button>
-            </Link>
-          )}
-          
+          <Link href="/account">
+            <Button variant="ghost" size="icon">
+              <User className="h-5 w-5" />
+              <span className="sr-only">Account</span>
+            </Button>
+          </Link>
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingBag className="h-5 w-5" />
               {items.length > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black text-xs text-white">
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">
                   {items.length}
                 </span>
               )}

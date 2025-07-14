@@ -142,7 +142,7 @@ export default function AdminShippingOptions() {
               <div>
                 <p className="font-medium">{option.state}</p>
                 <p className="text-sm text-gray-500">
-                  🏠 {Number(option.to_home).toFixed(2)} DA &nbsp; | &nbsp; 🧾 {Number(option.to_desk).toFixed(2)} DA
+                  🏠 {Number(option.to_home).toFixed(0)} DA &nbsp; | &nbsp; 🧾 {Number(option.to_desk).toFixed(0)} DA
                 </p>
               </div>
               <div className="flex space-x-2">

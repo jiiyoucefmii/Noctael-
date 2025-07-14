@@ -25,12 +25,6 @@ export default function CartPage() {
           </div>
         </div>
         <div className="mt-8 text-center">
-          <p className="mb-4 text-sm text-gray-500">
-            Need help? Contact our customer support at{" "}
-            <Link href="/contact" className="text-black underline">
-              support@noctael.com
-            </Link>
-          </p>
           <Button asChild variant="outline">
             <Link href="/products">
               <ShoppingBag className="mr-2 h-4 w-4" />

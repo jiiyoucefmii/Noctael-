@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
@@ -22,12 +23,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className="dark bg-[#0A0A0A]" style={{ colorScheme: 'dark' }}>
+      <body className={`${inter.className} bg-background text-foreground min-h-screen`}>
         <CartProvider>
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-screen flex-col bg-background text-foreground">
             <Header />
-            <div className="flex-1">{children}</div>
+            <div className="flex-1 bg-background">{children}</div>
             <Footer />
           </div>
           <Toaster />

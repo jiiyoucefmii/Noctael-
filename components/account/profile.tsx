@@ -127,7 +127,7 @@ export default function AccountProfile() {
 
   return (
     <>
-      <Card>
+      <Card className="bg-[#171717] rounded-[5px] border-0">
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
           <CardDescription>Update your personal information</CardDescription>
@@ -211,7 +211,7 @@ export default function AccountProfile() {
         </form>
       </Card>
 
-      <Card className="mt-6">
+      <Card className="mt-6 bg-[#171717] rounded-[5px] border-0">
         <CardHeader>
           <CardTitle>Change Email</CardTitle>
           <CardDescription>A verification link will be sent to the new email.</CardDescription>

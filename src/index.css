@@ -3,30 +3,8 @@
 @tailwind utilities;
 
 @layer base {
+  /* Set dark mode as the default root theme */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;
@@ -45,15 +23,169 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 217.2 32.6% 17.5%;
+    --radius: 0.5rem; 
+    --color-scheme: dark;
+  }
+
+  /* Remove all default outlines and borders */
+  * {
+    outline: none !important;
+    border: none !important;
+  }
+
+  /* Ensure html and body use dark background */
+  html {
+    background-color: hsl(var(--background));
+    color-scheme: var(--color-scheme);
+    color: hsl(var(--foreground));
+    outline: none;
+    border: none;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    min-height: 100vh;
+    outline: none;
+    border: none;
+  }
+
+  /* Remove focus outlines */
+  *:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  *:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove button outlines */
+  button {
+    outline: none !important;
+    border: none !important;
+  }
+
+  button:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove input outlines */
+  input {
+    outline: none !important;
+  }
+
+  input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove link outlines */
+  a {
+    outline: none !important;
+  }
+
+  a:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Override any light mode defaults */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+@layer components {
+  /* Remove all borders and outlines from common elements */
+  .no-outline {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  /* Ensure all backgrounds are properly dark */
+  .bg-background {
+    background-color: hsl(var(--background)) !important;
+  }
+  
+  .text-foreground {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Remove borders from cards but keep background */
+  .card {
+    border: none !important;
+    outline: none !important;
+  }
+
+  /* Remove borders from buttons */
+  .btn, button, [role="button"] {
+    border: none !important;
+    outline: none !important;
+  }
+
+  /* Remove borders from inputs */
+  input, textarea, select {
+    border: none !important;
+    outline: none !important;
+  }
+
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
+
+@layer utilities {
+  /* Utility classes to remove outlines */
+  .remove-outline {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .remove-focus-outline:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .remove-all-borders * {
+    border: none !important;
+    outline: none !important;
   }
 }

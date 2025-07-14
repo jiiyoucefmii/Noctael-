@@ -124,9 +124,9 @@ export default function AdminDashboard() {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <div className="w-64 border-r bg-gray-50">
-        <div className="flex h-16 items-center border-b px-6">
-          <Link href="/admin" className="flex items-center font-semibold">
+      <div className="w-64 border-0 bg-[#171717] relative text-white"> {/* Updated styling */}
+        <div className="flex h-16 items-center border-b border-gray-800 px-6">
+          <Link href="/admin" className="flex items-center font-semibold text-white">
             <Box className="mr-2 h-6 w-6" /> Noctael Admin
           </Link>
         </div>
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
               <button
                 key={tab.id}
                 className={`flex w-full items-center rounded-md px-3 py-2 text-sm font-medium ${
-                  activeTab === tab.id ? "bg-black text-white" : "text-gray-700 hover:bg-gray-100"
+                  activeTab === tab.id ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
                 }`}
                 onClick={() => setActiveTab(tab.id)}
               >
@@ -146,18 +146,16 @@ export default function AdminDashboard() {
             ))}
           </nav>
         </div>
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="space-y-2">
-            <Button asChild variant="outline" className="w-full justify-start">
-              <Link href="/">
-                <Home className="mr-2 h-4 w-4" />
-                View Store
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start text-red-600">
-              <LogOut className="mr-2 h-4 w-4" /> Logout
-            </Button>
-          </div>
+        <div className="absolute bottom-4 left-4 right-4 space-y-2"> 
+          <Button asChild variant="outline" className="w-full justify-start border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white">
+            <Link href="/">
+              <Home className="mr-2 h-4 w-4" />
+              View Store
+            </Link>
+          </Button>
+          <Button variant="outline" className="w-full justify-start text-red-500 border-gray-700 hover:bg-gray-800 hover:text-red-400">
+            <LogOut className="mr-2 h-4 w-4" /> Logout
+          </Button>
         </div>
       </div>
 
@@ -211,7 +209,7 @@ function AdminDashboardContent({ data, loading }: { data: typeof dashboardData, 
           {/* Charts and Recent Orders */}
           <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Sales Chart */}
-            <div className="rounded-lg border p-6">
+            <div className="rounded-[5px] border-0 p-6 bg-[#171717]">
               <h2 className="mb-4 text-lg font-medium">Sales Overview</h2>
               <div className="h-64">
                 {data.salesData.length > 0 ? (
@@ -221,7 +219,7 @@ function AdminDashboardContent({ data, loading }: { data: typeof dashboardData, 
                       <XAxis dataKey="name" />
                       <YAxis />
                       <Tooltip 
-                        formatter={(value: number) => [`$${value.toFixed(2)}`, 'Sales']}
+                        formatter={(value: number) => [`${value.toFixed(0)} Da`, 'Sales']}
                         labelFormatter={(label) => `Month: ${label}`}
                       />
                       <Legend />
@@ -245,7 +243,7 @@ function AdminDashboardContent({ data, loading }: { data: typeof dashboardData, 
             </div>
 
             {/* Recent Orders */}
-            <div className="rounded-lg border p-6">
+            <div className="rounded-[5px] border-0 p-6 bg-[#171717]">
               <h2 className="mb-4 text-lg font-medium">Recent Orders</h2>
               <div className="space-y-4">
                 {data.recentOrders.length > 0 ? (
@@ -273,7 +271,7 @@ function StatCard({ icon, title, value, bgColor }: {
   bgColor: string 
 }) {
   return (
-    <div className="rounded-lg border p-6">
+    <div className="rounded-[5px] border-0 p-6 bg-[#171717]">
       <div className="flex items-center">
         <div className={`rounded-full ${bgColor} p-3`}>
           {icon}
@@ -297,7 +295,7 @@ function OrderCard({ order }: { order: Order }) {
         </p>
       </div>
       <div className="text-right">
-        <p className="font-medium">${Number(order.total).toFixed(2)}</p>
+        <p className="font-medium">{Number(order.total).toFixed(0)} Da</p>
         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
             order.status === 'accepted' 
               ? 'bg-green-100 text-green-800' 

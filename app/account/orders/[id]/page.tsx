@@ -23,7 +23,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
     })
 
   const formatPrice = (amount: number | string) =>
-    `$${Number(amount).toFixed(2)}`
+    `${Number(amount).toFixed(0)} Da`
 
   const getStatusColor = (status: string) => {
     switch (status) {

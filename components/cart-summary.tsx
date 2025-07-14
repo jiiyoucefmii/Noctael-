@@ -73,7 +73,7 @@ export default function CartSummary() {
   const calculatedTotal = Math.max(0, total)
 
   return (
-    <Card>
+    <Card className="border-0 bg-[#171717]">
       <CardHeader>
         <CardTitle>Order Summary</CardTitle>
       </CardHeader>
@@ -81,13 +81,13 @@ export default function CartSummary() {
       <CardContent className="space-y-4">
         <div className="flex justify-between">
           <span>Subtotal</span>
-          <span>{Number(subtotal).toFixed(2)} Da</span>
+          <span>{Number(subtotal).toFixed(0)} Da</span>
         </div>
 
         {discount && discount.amount > 0 && (
           <div className="flex justify-between text-green-600">
             <span>Discount ({discount.percent}% off)</span>
-            <span>-{Number(discount.amount).toFixed(2)} Da</span>
+            <span>-{Number(discount.amount).toFixed(0)} Da</span>
           </div>
         )}
 
@@ -129,10 +129,10 @@ export default function CartSummary() {
         <div className="flex justify-between font-medium text-lg">
           <span>Total</span>
           <span>
-            {Number(calculatedTotal).toFixed(2)} Da
+            {Number(calculatedTotal).toFixed(0)} Da
             {discount?.amount > 0 && (
               <span className="ml-2 text-sm text-gray-500 line-through">
-                {Number(subtotal).toFixed(2)} Da
+                {Number(subtotal).toFixed(0)} Da
               </span>
             )}
           </span>

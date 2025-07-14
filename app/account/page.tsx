@@ -19,12 +19,10 @@ export default function AccountPage() {
         <Tabs defaultValue="profile" className="space-y-6">
           <div className="flex justify-center lg:justify-start">
 
-            <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsList className="grid w-full max-w-md grid-cols-3 bg-[#171717] rounded-[5px] border-0">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="orders">Orders</TabsTrigger>
               <TabsTrigger value="addresses">Addresses</TabsTrigger>
-             
-
             </TabsList>
           </div>
 

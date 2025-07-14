@@ -190,11 +190,10 @@ export default function AdminCustomers() {
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount
     return num.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })
+      style: "decimal",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }) + " Da"
   }
 
   const formatDate = (dateString: string) => {
@@ -349,7 +348,7 @@ export default function AdminCustomers() {
                         <span>
                           {formatCurrency(
                             parseFloat(
-                              Number(customerStats.order_statistics.average_order_value || 0).toFixed(2)
+                              Number(customerStats.order_statistics.average_order_value || 0).toFixed(0)
                             )
                           )}
                         </span>

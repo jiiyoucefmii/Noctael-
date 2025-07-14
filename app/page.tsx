@@ -1,4 +1,5 @@
-import Link from "next/link"
+// app/page.tsx or src/pages/HomePage.tsx
+import Link from "next/link" // or { Link } from "react-router-dom" for React Router
 import { ShoppingBag } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -9,22 +10,27 @@ import Newsletter from "@/components/newsletter"
 
 export default function Home() {
   return (
-    <main className="flex-1">
-      {/* Hero Section */}
-      <section className="relative h-[80vh] bg-black">
-        <div className="absolute inset-0 bg-[url('/hero.jpg')] bg-cover bg-center opacity-60" />
+    <main className="flex-1 bg-background text-foreground">
+      {/* Hero Section - Enhanced for dark theme */}
+      <section className="relative h-[80vh] bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+        <div className="absolute inset-0 bg-[url('/hero.jpg')] bg-cover bg-center opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
         <div className="relative flex h-full flex-col items-center justify-center px-4 text-center">
           <div className="max-w-4xl mx-auto">
-            <h1 className="mb-4 text-5xl font-bold tracking-tight text-white sm:text-6xl md:text-7xl">NOCTAEL</h1>
+            <h1 className="mb-4 text-5xl font-bold tracking-tight text-white sm:text-6xl md:text-7xl bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+              NOCTAEL
+            </h1>
             <p className="mb-8 max-w-md mx-auto text-lg text-gray-200">
               Embrace the darkness with our premium clothing collection designed for the night dwellers.
             </p>
             <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0 sm:justify-center">
-              <Button asChild size="lg" className="bg-white text-black hover:bg-gray-200">
-                <Link href="/products">Shop Men</Link>
+              {/* Light button for contrast */}
+              <Button asChild size="lg" className="bg-white text-black hover:bg-gray-200 transition-all duration-300 font-semibold">
+                <Link href="/products?gender=men">Shop Men</Link>
               </Button>
-              <Button asChild size="lg" className="bg-white text-black hover:bg-gray-200">
-                <Link href="/products">Shop Women</Link>
+              {/* Dark outline button */}
+              <Button asChild size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black transition-all duration-300 font-semibold">
+                <Link href="/products?gender=women">Shop Women</Link>
               </Button>
             </div>
           </div>
@@ -32,19 +38,19 @@ export default function Home() {
       </section>
 
       {/* Promotional Carousel */}
-      <section className="py-12">
+      <section className="py-12 bg-background">
         <div className="container mx-auto px-4">
           <PromoCarousel />
         </div>
       </section>
 
       {/* Featured Products */}
-      <section className="bg-gray-50 py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight">Featured Collection</h2>
+      <section className="bg-background py-24">
+        <div className="container mx-auto px-4 max-w-[1400px]">
+          <h2 className="mb-16 text-center text-4xl font-bold tracking-tight text-foreground">Featured Collection</h2>
           <FeaturedProducts />
-          <div className="mt-12 text-center">
-            <Button asChild size="lg">
+          <div className="mt-20 text-center">
+            <Button asChild size="lg" className="bg-white text-black hover:bg-white/90 font-medium tracking-wide px-8 py-6">
               <Link href="/products">
                 View All Products <ShoppingBag className="ml-2 h-4 w-4" />
               </Link>
@@ -53,19 +59,8 @@ export default function Home() {
         </div>
       </section>
 
-
-      {/* Categories 
-
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight">Shop by Category</h2>
-          <CategoryGrid />
-        </div>
-      </section>
-      */}
-
       {/* Newsletter */}
-      <section className="bg-black py-16 text-white">
+      <section className="bg-gradient-to-r from-gray-900 via-gray-800 to-black py-16 border-t border-border">
         <div className="container mx-auto px-4">
           <Newsletter />
         </div>

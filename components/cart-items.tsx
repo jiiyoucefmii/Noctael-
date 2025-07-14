@@ -85,16 +85,16 @@ export default function CartItems() {
 
   if (isLoading) {
     return (
-      <div className="flex h-60 flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+      <div className="flex h-40 items-center justify-center rounded-lg border-0 border-dashed bg-[#171717]">
         <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-400" />
         <h2 className="text-lg font-medium">Loading your cart...</h2>
       </div>
     )
   }
 
-  if (!items || items.length === 0) {
+  if (count === 0) {
     return (
-      <div className="flex h-60 flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+      <div className="flex h-60 flex-col items-center justify-center rounded-lg border-0 border-dashed bg-[#171717]">
         <ShoppingBag className="mb-4 h-12 w-12 text-gray-300" />
         <h2 className="mb-2 text-xl font-medium">Your cart is empty</h2>
         <p className="mb-6 text-gray-500">Looks like you haven't added anything to your cart yet.</p>
@@ -106,7 +106,7 @@ export default function CartItems() {
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border-0 bg-[#171717]">
       <div className="p-6">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-medium">Your Cart ({count})</h2>
@@ -125,7 +125,7 @@ export default function CartItems() {
             <div key={`${item.id}-${item.size}`} className="flex py-6">
               <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border">
                 <Image 
-                  src={getImageUrl(item.image)} 
+                  src={getImageUrl(item.image ?? '')}
                   alt={item.name} 
                   fill
                   className="object-cover object-center"
@@ -152,7 +152,7 @@ export default function CartItems() {
                     )}
                   </div>
                   <p className="text-base font-medium">
-                    {Number(item.price * item.quantity).toFixed(2)} Da
+                    {Number(item.price * item.quantity).toFixed(0)} Da
                   </p>
                 </div>
 
@@ -213,22 +213,22 @@ export default function CartItems() {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>{Number(subtotal).toFixed(2)} Da</span>
+              <span>{Number(subtotal).toFixed(0)} Da</span>
             </div>
             {discount && discount.amount > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Discount ({discount.percent}%)</span>
-                <span>-{Number(discount.amount).toFixed(2)} Da</span>
+                <span>-{Number(discount.amount).toFixed(0)} Da</span>
               </div>
             )}
             <Separator />
             <div className="flex justify-between font-medium">
               <span>Total</span>
               <span>
-                {Math.max(0, total).toFixed(2)} Da
+                {Math.max(0, total).toFixed(0)} Da
                 {discount?.amount > 0 && (
                   <span className="ml-2 text-sm text-gray-500 line-through">
-                    {Number(subtotal).toFixed(2)} Da
+                    {Number(subtotal).toFixed(0)} Da
                   </span>
                 )}
               </span>

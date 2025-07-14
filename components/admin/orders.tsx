@@ -236,7 +236,7 @@ export default function AdminOrders() {
                       {order.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>${Number(order.total).toFixed(2)}</TableCell>
+                  <TableCell>{Number(order.total).toFixed(0)} Da</TableCell>
                   <TableCell>
                     {new Date(order.created_at).toLocaleDateString()}
                   </TableCell>
@@ -339,9 +339,9 @@ export default function AdminOrders() {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>${item.price.toFixed(2)}</TableCell>
+                          <TableCell>{item.price.toFixed(0)} Da</TableCell>
                           <TableCell>{item.quantity}</TableCell>
-                          <TableCell>${(item.price * item.quantity).toFixed(2)}</TableCell>
+                          <TableCell>${(item.price * item.quantity).toFixed(0)} Da</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -352,17 +352,17 @@ export default function AdminOrders() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>${Number(selectedOrder.subtotal).toFixed(2)}</span>
+                  <span>{Number(selectedOrder.subtotal).toFixed(0)} Da</span>
                 </div>
                 {selectedOrder.is_discounted && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Discount</span>
-                    <span className="text-green-600">-${Number(selectedOrder.discount_amount).toFixed(2)}</span>
+                    <span className="text-green-600">-{Number(selectedOrder.discount_amount).toFixed(0)} Da</span>
                   </div>
                 )}
                 <div className="flex justify-between font-medium">
                   <span>Total</span>
-                  <span>${Number(selectedOrder.total).toFixed(2)}</span>
+                  <span>{Number(selectedOrder.total).toFixed(0)} Da</span>
                 </div>
               </div>
             </div>

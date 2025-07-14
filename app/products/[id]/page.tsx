@@ -65,7 +65,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.category_name}
           </Link>
           <ChevronRight className="h-4 w-4" />
-          <span className="text-gray-900 line-clamp-1">{product.name}</span>
+          <span className="text-gray-400 line-clamp-1">{product.name}</span>
         </nav>
 
         <ProductPageClient product={product} />

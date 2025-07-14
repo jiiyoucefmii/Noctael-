@@ -110,14 +110,14 @@ export default function OrderConfirmationPage() {
                         </p>
                       )}
                     </div>
-                    <p>{item.price.toFixed(2)} DA × {item.quantity}</p>
+                    <p>{item.price.toFixed(0)} DA × {item.quantity}</p>
                   </div>
                 ))}
               </div>
               <div className="mt-4 pt-4 border-t">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>{order.subtotal.toFixed(2)} DA</span>
+                  <span>{order.subtotal.toFixed(0)} DA</span>
                 </div>
                 {order.discount_amount && (
                   <div className="flex justify-between text-green-600">
@@ -127,7 +127,7 @@ export default function OrderConfirmationPage() {
                 )}
                 <div className="flex justify-between font-medium mt-2">
                   <span>Total</span>
-                  <span>{order.total.toFixed(2)} DA</span>
+                  <span>{order.total.toFixed(0)} DA</span>
                 </div>
               </div>
             </div>

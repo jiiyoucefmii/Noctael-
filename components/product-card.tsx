@@ -2,11 +2,11 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { Heart, ShoppingCart, Loader2 } from "lucide-react"
+import { Heart, Loader2 } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
@@ -20,22 +20,22 @@ interface ProductCardProps {
 export default function ProductCard({ product, className }: ProductCardProps) {
   const { toast } = useToast()
   const [isWishlistLoading, setIsWishlistLoading] = useState(false)
+  const [isWishlisted, setIsWishlisted] = useState(false)
 
-  // Get the first variant for pricing
   const firstVariant = product.variants?.[0]
   const price = firstVariant?.price || 0
   const salePrice = firstVariant?.sale_price
   const mainImage = product.main_image || firstVariant?.images?.[0]?.image_url || "/placeholder.svg"
-  const isOutOfStock = firstVariant?.stock_quantity === 0
+  const isOutOfStock = firstVariant?.stockQuantity === 0
 
   const handleAddToWishlist = async () => {
     setIsWishlistLoading(true)
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800))
+      setIsWishlisted(!isWishlisted)
       toast({
-        title: "Added to wishlist",
-        description: `${product.name} has been added to your wishlist.`,
+        title: isWishlisted ? "Removed from wishlist" : "Added to wishlist",
+        description: `${product.name} has been ${isWishlisted ? 'removed from' : 'added to'} your wishlist.`,
       })
     } catch (error) {
       toast({
@@ -49,87 +49,64 @@ export default function ProductCard({ product, className }: ProductCardProps) {
   }
 
   return (
-    <Card className={cn("overflow-hidden hover:shadow-lg transition-shadow", className)}>
-      <div className="relative aspect-square">
-        <Link href={`/products/${product.id}`} className="block h-full">
+    <Card className={cn("overflow-hidden border-0 shadow-none relative bg-transparent hover:shadow-sm transition-all duration-300", className)}>
+      <div className="relative w-full aspect-[4/5] bg-neutral-900/50">
+
+        <Link href={`/products/${product.id}`} className="block w-full h-full">
           <Image
             src={mainImage.startsWith('/') 
               ? `${process.env.NEXT_PUBLIC_API_URL}${mainImage}` 
               : mainImage}
             alt={product.name}
             fill
-            className="object-cover transition-transform duration-300 hover:scale-105"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         </Link>
-        
-        {/* Badges */}
-        <div className="absolute top-2 left-2 space-x-2">
-          {product.is_new && (
-            <Badge className="bg-black text-white">New</Badge>
-          )}
-          {product.is_on_sale && (
-            <Badge className="bg-red-600 text-white">Sale</Badge>
-          )}
-          {isOutOfStock && (
-            <Badge variant="outline" className="bg-background/80">
-              Out of Stock
-            </Badge>
-          )}
-        </div>
 
-        {/* Wishlist button */}
+        {/* NEW badge - bottom left (Gymshark style) */}
+        {product.is_new && (
+          <Badge className="absolute bottom-2 left-2 bg-white text-black font-medium px-3 py-1 rounded-sm">NEW</Badge>
+        )}
+
+        {/* Wishlist - top right */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-2 top-10 rounded-full bg-white/80 p-1.5 text-black hover:bg-white"
+          className={cn(
+            "absolute top-2 right-2 rounded-full p-2 bg-white/90 hover:bg-white",
+            isWishlisted && "bg-white text-black"
+          )}
           onClick={handleAddToWishlist}
           disabled={isWishlistLoading}
         >
           {isWishlistLoading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
-            <Heart className="h-5 w-5" />
+            <Heart className={cn("h-5 w-5", isWishlisted && "fill-current")}/>
           )}
           <span className="sr-only">Add to wishlist</span>
         </Button>
+        
+        {/* View Options button on hover (Gymshark style) */}
+        <div className="absolute inset-0 flex items-end justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+          <Button
+            className="w-11/12 bg-white text-black hover:bg-white/90 font-medium tracking-wide"
+            asChild
+          >
+            <Link href={`/products/${product.id}`}>
+              {isOutOfStock ? "Out of Stock" : "View Options"}
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <CardContent className="p-4 space-y-2">
-        <Link href={`/products/${product.id}`} className="hover:underline">
-          <h3 className="font-medium line-clamp-2 min-h-[56px]">{product.name}</h3>
-        </Link>
-        <p className="text-sm text-muted-foreground">{product.category_name}</p>
-        
-        <div className="flex items-center gap-2">
-          {product.is_on_sale && salePrice ? (
-            <>
-              <p className="font-semibold">${salePrice.toFixed(2)}</p>
-              <p className="text-sm text-muted-foreground line-through">
-                ${price.toFixed(2)}
-              </p>
-              <Badge variant="outline" className="ml-auto text-red-600">
-                {Math.round(((price - salePrice) / price) * 100)}% OFF
-              </Badge>
-            </>
-          ) : (
-            <p className="font-semibold">${price.toFixed(2)}</p>
-          )}
-        </div>
+      <CardContent className="p-4 pt-5 space-y-1 text-center">  
+        <h3 className="font-bold text-base line-clamp-1 text-center">{product.name}</h3>
+        <p className="text-sm text-muted-foreground font-light text-center">Oversized Fit</p>
+        <p className="text-sm text-muted-foreground font-light text-center">Black</p>
+        <p className="font-bold text-base pt-1 text-center">{salePrice ? salePrice.toFixed(0) : price.toFixed(0)} Da</p>
       </CardContent>
-
-      <CardFooter className="p-4 pt-0">
-        <Button 
-          className="w-full" 
-          asChild
-          disabled={isOutOfStock}
-        >
-          <Link href={`/products/${product.id}`}>
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            {isOutOfStock ? "Out of Stock" : "View Options"}
-          </Link>
-        </Button>
-      </CardFooter>
     </Card>
   )
 }

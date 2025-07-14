@@ -136,7 +136,7 @@ export default function AccountAddresses() {
   const uniqueStates = [...new Set(shippingOptions.map(option => option.state))]
 
   return (
-    <Card>
+    <Card className="bg-[#171717] rounded-[5px] border-0">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Saved Addresses</CardTitle>
@@ -149,7 +149,7 @@ export default function AccountAddresses() {
               Add Address
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-[#171717] rounded-[5px] border-0">
             <DialogHeader>
               <DialogTitle>{formData.id ? "Edit Address" : "Add New Address"}</DialogTitle>
               <DialogDescription>
@@ -187,11 +187,6 @@ export default function AccountAddresses() {
               <div className="space-y-2">
                 <Label htmlFor="address">Address</Label>
                 <Input id="address" value={formData.address} onChange={handleInputChange} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="zip">Zip Code</Label>
-                <Input id="zip" value={formData.zip} onChange={handleInputChange} />
               </div>
             </div>
             <DialogFooter>

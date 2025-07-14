@@ -750,7 +750,7 @@ export default function AdminProducts() {
                     </TableCell>
                     <TableCell className="font-semibold">{product.name}</TableCell>
                     <TableCell>{product.category_name}</TableCell>
-                    <TableCell>${price.toFixed(2)}</TableCell>
+                    <TableCell>{price.toFixed(0)} Da</TableCell>
                     <TableCell>{totalStock}</TableCell>
                     <TableCell>
                       <Dialog>
@@ -775,9 +775,9 @@ export default function AdminProducts() {
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                       <p><strong>Size:</strong> {variant.size}</p>
                                       <p><strong>Color:</strong> {variant.color}</p>
-                                      <p><strong>Price:</strong> ${Number(variant.price).toFixed(2)}</p>
+                                      <p><strong>Price:</strong> {Number(variant.price).toFixed(0)} Da</p>
                                       {variant.sale_price != null && variant.sale_price > 0 && (
-                                        <p><strong>Sale Price:</strong> ${Number(variant.sale_price).toFixed(2)}</p>
+                                        <p><strong>Sale Price:</strong> {Number(variant.sale_price).toFixed(0)} Da</p>
                                       )}
                                       <p><strong>Stock:</strong> {variant.stock}</p>
                                     </div>

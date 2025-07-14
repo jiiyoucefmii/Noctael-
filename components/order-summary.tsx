@@ -64,8 +64,9 @@ export default function OrderSummary() {
 
   const originalTotal = subtotal + (shipping ?? 0)
 
+  // For the main order summary card
   return (
-    <Card>
+    <Card className="border-0 bg-[#171717]">
       <CardHeader>
         <CardTitle>Order Summary</CardTitle>
       </CardHeader>
@@ -88,7 +89,7 @@ export default function OrderSummary() {
                   {item.size && `Size: ${item.size} · `}Qty: {item.quantity}
                 </p>
               </div>
-              <p className="font-medium">{(item.price * item.quantity).toFixed(2)} Da</p>
+              <p className="font-medium">{(item.price * item.quantity).toFixed(0)} Da</p>
             </div>
           ))}
         </div>
@@ -96,35 +97,35 @@ export default function OrderSummary() {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span>Subtotal</span>
-            <span>{subtotal.toFixed(2)} Da</span>
+            <span>{subtotal.toFixed(0)} Da</span>
           </div>
 
           {discount && discount.amount > 0 && (
             <>
               <div className="flex justify-between text-green-600">
                 <span>Discount ({discountPercent}%)</span>
-                <span>-{discount.amount.toFixed(2)} Da</span>
+                <span>-{discount.amount.toFixed(0)} Da</span>
               </div>
               <div className="flex justify-between">
                 <span>Subtotal after discount</span>
-                <span>{(subtotal - discount.amount).toFixed(2)} Da</span>
+                <span>{(subtotal - discount.amount).toFixed(0)} Da</span>
               </div>
             </>
           )}
 
           <div className="flex justify-between">
             <span>Shipping ({shippingType === "to_home" ? "To Home" : "To Desk"})</span>
-            <span>{shipping === 0 ? "Free" : `${shipping.toFixed(2)} Da`}</span>
+            <span>{shipping === 0 ? "Free" : `${shipping.toFixed(0)} Da`}</span>
           </div>
         </div>
         <Separator />
         <div className="flex justify-between font-medium">
           <span>Total</span>
           <span>
-            {total.toFixed(2)} Da
-            {discount?.amount > 0 && (
+            {total.toFixed(0)} Da
+            {discount && discount.amount && discount.amount > 0 && (
               <span className="ml-2 text-sm text-gray-500 line-through">
-                {originalTotal.toFixed(2)} Da
+                {originalTotal.toFixed(0)} Da
               </span>
             )}
           </span>
