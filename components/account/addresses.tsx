@@ -33,7 +33,7 @@ export default function AccountAddresses() {
   const [userAddresses, setUserAddresses] = useState<Address[]>([])
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
   const [loading, setLoading] = useState(true)
-  const [formData, setFormData] = useState<Omit<Address, 'user_id' | 'created_at' | 'updated_at'>>({{
+  const [formData, setFormData] = useState<Omit<Address, 'user_id' | 'created_at' | 'updated_at'>>({  
     id: undefined,
     name: "",
     address: "",
