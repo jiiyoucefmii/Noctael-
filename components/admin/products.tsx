@@ -355,7 +355,7 @@ export default function AdminProducts() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className=" mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Products</h1>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open)
@@ -366,7 +366,7 @@ export default function AdminProducts() {
               <Plus className="mr-2 h-5 w-5" /> Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogContent className="rounded-[5px] border-0 p-6 bg-[#171717] max-w-2xl max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>{isEditing ? "Edit Product" : "Add New Product"}</DialogTitle>
               <DialogDescription>
@@ -374,7 +374,7 @@ export default function AdminProducts() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="overflow-y-auto flex-1 space-y-4 py-4 px-1">
+            <div className="overflow-y-auto custom-scrollbar flex-1 space-y-4 py-4 px-1">
               <Input 
                 placeholder="Product Name" 
                 value={newProduct.name} 
@@ -492,7 +492,7 @@ export default function AdminProducts() {
                 </label>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 w-full">
+              <div className=" rounded-[5px] border-0 p-6 bg-[#171717]grid grid-cols-2 gap-4 w-full">
                 <div className="flex flex-col">
                   <label className="text-sm font-medium text-muted-foreground mb-1">Color</label>
                   <Input
@@ -701,7 +701,7 @@ export default function AdminProducts() {
         </div>
       </div>
 
-      <div className="rounded-lg border overflow-x-auto">
+      <div className="rounded-[5px] border-0 p-6 bg-[#171717] flex flex-col overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="text-base">

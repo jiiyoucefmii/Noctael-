@@ -94,7 +94,7 @@ export default function AdminShippingOptions() {
               Add Option
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="rounded-[5px] border-0 p-6 bg-[#171717]">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Shipping Option" : "Add Shipping Option"}</DialogTitle>
             </DialogHeader>
@@ -133,7 +133,7 @@ export default function AdminShippingOptions() {
         </Dialog>
       </div>
 
-      <div className="space-y-4">
+      <div className="rounded-[5px] border-0 p-6 bg-[#171717] space-y-4">
         {shippingOptions.length === 0 ? (
           <p className="text-gray-500">No shipping options added yet.</p>
         ) : (
@@ -142,7 +142,7 @@ export default function AdminShippingOptions() {
               <div>
                 <p className="font-medium">{option.state}</p>
                 <p className="text-sm text-gray-500">
-                  🏠 {Number(option.to_home).toFixed(0)} DA &nbsp; | &nbsp; 🧾 {Number(option.to_desk).toFixed(0)} DA
+                  🏠 {Number(option.to_home).toFixed(2)} DA &nbsp; | &nbsp; 🧾 {Number(option.to_desk).toFixed(2)} DA
                 </p>
               </div>
               <div className="flex space-x-2">

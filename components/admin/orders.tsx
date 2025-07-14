@@ -164,8 +164,8 @@ export default function AdminOrders() {
   })
 
   return (
-    <div className="p-4">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="rounded-[5px] border-0 p-6 bg-[#171717]">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Orders</h1>
       </div>
 
@@ -273,7 +273,7 @@ export default function AdminOrders() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="rounded-[5px] border-0 p-6 bg-[#171717] sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Order Details</DialogTitle>
             <DialogDescription>

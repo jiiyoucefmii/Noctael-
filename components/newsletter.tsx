@@ -49,7 +49,7 @@ export default function Newsletter() {
         <Button 
           type="submit" 
           disabled={isLoading}
-          className="bg-white text-black hover:bg-white/90"
+          className="bg-white text-black hover:bg-white/90 border-0"
         >
           {isLoading ? "Joining..." : "Join"}
         </Button>

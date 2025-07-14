@@ -213,7 +213,7 @@ export default function AdminCustomers() {
   )
 
   return (
-    <div className="p-4 space-y-4">
+    <div className=" p-4 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold">Customers</h2>
         <div className="relative w-full sm:w-64">
@@ -228,7 +228,7 @@ export default function AdminCustomers() {
         </div>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-[5px] border-0 p-6 bg-[#171717]">
         <Table>
           <TableHeader>
             <TableRow>
@@ -257,7 +257,7 @@ export default function AdminCustomers() {
               filteredCustomers.map((customer) => (
                 <TableRow 
                   key={customer.id} 
-                  className="cursor-pointer hover:bg-gray-50"
+                  className="cursor-pointer hover:bg-gray-50 hover:text-black"
                   onClick={() => handleCustomerSelect(customer)}
                 >
                   <TableCell>
@@ -299,7 +299,7 @@ export default function AdminCustomers() {
 
       {selectedCustomer && (
         <Dialog open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="rounded-[5px] border-0 p-6 bg-[#171717] max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Customer Details</DialogTitle>
             </DialogHeader>
@@ -412,7 +412,7 @@ export default function AdminCustomers() {
                           {customerOrders.map((order) => (
                             <div key={order.id} className="border rounded-lg overflow-hidden">
                               <div 
-                                className="p-4 cursor-pointer hover:bg-gray-50 flex justify-between items-center"
+                                className="p-4 cursor-pointer hover:bg-gray-50 hover:text-black flex justify-between items-center"
                                 onClick={() => toggleExpandOrder(order.id)}
                               >
                                 <div>

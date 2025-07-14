@@ -16,26 +16,26 @@ export default function Home() {
         <div className="absolute inset-0 bg-[url('/hero.jpg')] bg-cover bg-center opacity-30" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
         <div className="relative flex h-full flex-col items-center justify-center px-4 text-center">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="mb-4 text-5xl font-bold tracking-tight text-white sm:text-6xl md:text-7xl bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-              NOCTAEL
+          <div className="max-w-4xl mx-auto mb-8">
+            <h1 className="mb-4 text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl wave-text">
+              <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">N</span>
+              <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">O</span>
+              <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">C</span>
+              <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">T</span>
+              <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">A</span>
+              <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">E</span>
+              <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">L</span>
             </h1>
             <p className="mb-8 max-w-md mx-auto text-lg text-gray-200">
               Embrace the darkness with our premium clothing collection designed for the night dwellers.
             </p>
-            <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0 sm:justify-center">
-              {/* Light button for contrast */}
-              <Button asChild size="lg" className="bg-white text-black hover:bg-gray-200 transition-all duration-300 font-semibold">
-                <Link href="/products?gender=men">Shop Men</Link>
-              </Button>
-              {/* Dark outline button */}
-              <Button asChild size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-black transition-all duration-300 font-semibold">
-                <Link href="/products?gender=women">Shop Women</Link>
-              </Button>
-            </div>
+          </div>
+          <div className="max-w-md w-full">
+            <Newsletter />
           </div>
         </div>
       </section>
+     
 
       {/* Promotional Carousel */}
       <section className="py-12 bg-background">
@@ -56,13 +56,6 @@ export default function Home() {
               </Link>
             </Button>
           </div>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="bg-gradient-to-r from-gray-900 via-gray-800 to-black py-16 border-t border-border">
-        <div className="container mx-auto px-4">
-          <Newsletter />
         </div>
       </section>
     </main>

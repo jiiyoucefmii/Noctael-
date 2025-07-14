@@ -118,7 +118,7 @@ export default function AdminPromotions() {
           <DialogTrigger asChild>
             <Button><PlusCircle className="mr-2 h-4 w-4" /> New Promo Code</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="rounded-[5px] border-0 p-6 bg-[#171717]">
             <DialogHeader><DialogTitle>Create Promo Code</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <Input 
@@ -171,7 +171,7 @@ export default function AdminPromotions() {
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <div className="space-y-4">
+        <div className="rounded-[5px] border-0 p-6 bg-[#171717] space-y-4">
           {promoCodes.length === 0 ? (
             <p className="text-gray-500">No promo codes found.</p>
           ) : (

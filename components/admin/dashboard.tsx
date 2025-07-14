@@ -9,7 +9,6 @@ import {
   LayoutDashboard, 
   LogOut, 
   Package, 
-  Settings, 
   ShoppingCart, 
   Users, 
   Tag, 
@@ -30,7 +29,7 @@ import { Button } from "@/components/ui/button"
 import AdminProducts from "@/components/admin/products"
 import AdminOrders from "@/components/admin/orders"
 import AdminCustomers from "@/components/admin/customers"
-import AdminSettings from "@/components/admin/settings"
+
 import AdminPromotions from "@/components/admin/promotions"
 import AdminShippingOptions from "@/components/admin/shippingOptions"
 
@@ -45,7 +44,6 @@ const tabs = [
   { id: "customers", label: "Customers", icon: Users },
   { id: "promotions", label: "Promotions", icon: Tag },
   { id: "shipping", label: "Shipping", icon: MapPin },
-  { id: "settings", label: "Settings", icon: Settings },
 ]
 
 export default function AdminDashboard() {
@@ -167,7 +165,6 @@ export default function AdminDashboard() {
         {activeTab === "customers" && <AdminCustomers />}
         {activeTab === "promotions" && <AdminPromotions />}
         {activeTab === "shipping" && <AdminShippingOptions />}
-        {activeTab === "settings" && <AdminSettings />}
       </div>
     </div>
   )
