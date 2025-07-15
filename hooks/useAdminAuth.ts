@@ -19,7 +19,7 @@ export function useAdminAuth() {
     const fetchAdmin = async () => {
       try {
         const res = await axios.get<{ admin: Admin }>(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"}/admin/me`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL || "https://noctael.onrender.com"}/admin/me`,
           { withCredentials: true }
         )
 
