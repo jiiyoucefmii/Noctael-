@@ -43,8 +43,7 @@ export default function LoginForm() {
           title: "Admin login successful",
           description: `Welcome, ${admin.name || "admin"}!`,
         })
-  
-        window.location.href = "/admin"
+        
       } catch (adminErr: any) {
         toast({
           title: "Login failed",

@@ -1,9 +1,9 @@
 // components/header.tsx
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, Search, ShoppingBag, User, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useCart } from "@/hooks/use-cart"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
+import { logoutUser } from "@/utils/api/users"
+import { useAdminAuth } from "@/hooks/useAdminAuth"
+import { logoutAdmin } from "@/utils/api/admin" // <-- add this if you have an admin logout API
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -23,8 +26,12 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const { items } = useCart()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isGuest, setIsAuthenticated } = useAuth()
+  const { admin, isAuthenticated: isAdminAuthenticated } = useAdminAuth()
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [showDropdown, setShowDropdown] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,6 +41,37 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Protect /account route for guests
+  useEffect(() => {
+    if (pathname.startsWith("/account") && (isGuest || !isAuthenticated)) {
+      router.replace("/auth/login")
+    }
+  }, [pathname, isGuest, isAuthenticated, router])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showDropdown) return
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [showDropdown])
+
+  const handleLogout = async () => {
+    if (isAdminAuthenticated && admin) {
+      // If you have an admin logout API, call it
+      try {
+        await logoutAdmin?.()
+      } catch {}
+    }
+    await logoutUser()
+    setIsAuthenticated(false)
+    router.replace("/auth/login")
+  }
 
   return (
     <header
@@ -83,7 +121,7 @@ export default function Header() {
               </div>
               <div className="border-t border-border py-4">
                 <div className="flex flex-col space-y-2">
-                  {!isAuthenticated && (
+                  {(!isAuthenticated || isGuest) && (
                     <>
                       <Link href="/auth/login" className="block py-2 text-lg hover:text-primary transition-colors">
                         Login
@@ -160,7 +198,13 @@ export default function Header() {
           )}
           
           <div className="hidden lg:flex space-x-2">
-            {!isAuthenticated && (
+            {isAdminAuthenticated && admin ? (
+              <Link href="/admin">
+                <Button variant="default" size="sm">
+                  Admin Dashboard
+                </Button>
+              </Link>
+            ) : (!isAuthenticated || isGuest) && (
               <>
                 <Link href="/auth/login">
                   <Button variant="outline" size="sm">
@@ -176,12 +220,44 @@ export default function Header() {
             )}
           </div>
           
-          <Link href="/account">
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-              <span className="sr-only">Account</span>
-            </Button>
-          </Link>
+          {isAuthenticated && !isGuest ? (
+            <div className="relative" ref={dropdownRef}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowDropdown((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={showDropdown}
+              >
+                <User className="h-5 w-5" />
+                <span className="sr-only">Account</span>
+              </Button>
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-40 rounded-md bg-background shadow-lg border z-50">
+                  <Link
+                    href="/account"
+                    className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    className="block w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/account">
+              <Button variant="ghost" size="icon">
+                <User className="h-5 w-5" />
+                <span className="sr-only">Account</span>
+              </Button>
+            </Link>
+          )}
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingBag className="h-5 w-5" />

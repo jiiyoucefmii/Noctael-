@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3001';
+import { API_URL } from './config'
 
 if (!API_URL) {
   throw new Error("NEXT_PUBLIC_API_URL is not defined in your .env file")

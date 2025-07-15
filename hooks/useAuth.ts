@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
-import { getCurrentUser } from "../utils/api/users";
+import { getCurrentUser, logoutUser } from "../utils/api/users";
+import { useAdminAuth } from "./useAdminAuth";
+
+
 
 export function useAuth() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
+  const { admin } = useAdminAuth();
+
 
   useEffect(() => {
     let isMounted = true;
@@ -13,6 +18,7 @@ export function useAuth() {
     const fetchUser = async () => {
       try {
         const data = await getCurrentUser();
+        console.log(data)
         if (isMounted) {
           if (!data) {
             setUser(null);
@@ -42,5 +48,20 @@ export function useAuth() {
     };
   }, []);
 
-  return { user, isAuthenticated,setIsAuthenticated, isGuest, loading };
+  useEffect(() => {
+    const shouldAutoLogout = isGuest && !user && !admin;
+  
+    if (!shouldAutoLogout) return;
+  
+    const handleUnload = () => {
+      logoutUser();
+    };
+  
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, [isGuest, user, admin]);
+  
+  return { user, isAuthenticated, setIsAuthenticated, isGuest, loading };
 }

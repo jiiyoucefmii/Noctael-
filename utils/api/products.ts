@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001';
+import { API_URL } from './config'
 
 export interface ProductVariant {
   id?: string;

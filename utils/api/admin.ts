@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const API_URL = 'http://localhost:3001';
+import { API_URL } from './config';
 
 export interface AdminLoginCredentials {
   email: string;
@@ -41,4 +40,8 @@ export async function adminLogout() {
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Admin logout failed');
   }
+}
+
+export async function logoutAdmin() {
+  await axios.post(`${API_URL}/admin/logout`, {}, { withCredentials: true });
 }

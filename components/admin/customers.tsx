@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Search, Mail, Phone, User, ChevronDown, ChevronUp, MapPin } from "lucide-react"
 import { getUsersWithOrders, getUserById } from "@/utils/api/users"
 import { getUserStatistics, getOrderById } from "@/utils/api/orders"
@@ -30,9 +30,10 @@ interface Customer {
   last_name: string
   email: string
   phone_number?: string
-  orders_count: number
+  created_at: string
+  updated_at: string
+  order_count: number
   total_spent: number
-  joined_date: string
   last_order_date?: string
 }
 
@@ -66,58 +67,54 @@ interface Order {
   total_items: number
 }
 
+interface CustomerStats {
+  order_statistics?: {
+    total_orders: number
+    total_spent: number
+    last_order_date?: string
+    average_order_value?: number
+    favorite_categories?: Array<{
+      category_name: string
+      items_ordered: number
+    }>
+  }
+  recent_orders?: Order[]
+  wishlist_items?: number
+  cart_items?: number
+}
+
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [customerOrders, setCustomerOrders] = useState<Order[]>([])
-  const [customerStats, setCustomerStats] = useState<any>(null)
+  const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null)
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [showOrders, setShowOrders] = useState(false)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
   const { toast } = useToast()
 
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        setLoading(true)
-        const data = await getUsersWithOrders()
-        
-        const formatted = data.users.map((user: any) => ({
-          id: user.id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          email: user.email,
-          phone_number: user.phone_number || undefined,
-          orders_count: user.order_count || 0,
-          total_spent: user.total_spent || 0,
-          joined_date: new Date(user.created_at).toLocaleDateString(),
-          last_order_date: user.last_order_date 
-            ? new Date(user.last_order_date).toLocaleDateString()
-            : undefined
-        }))
+  const formatCurrency = useCallback((amount: string | number) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount
+    return num.toLocaleString("en-US", {
+      style: "decimal",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }) + " Da"
+  }, [])
 
-        formatted.sort((a: Customer, b: Customer) => 
-          new Date(b.joined_date).getTime() - new Date(a.joined_date).getTime()
-        )
+  const formatDate = useCallback((dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }, [])
 
-        setCustomers(formatted)
-      } catch (error) {
-        console.error("Failed to fetch customers:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load customers. Please try again later.",
-          variant: "destructive"
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchCustomers()
-  }, [toast])
-
-  const fetchOrderDetails = async (orderId: string) => {
+  const fetchOrderDetails = useCallback(async (orderId: string): Promise<Order | null> => {
     try {
       const response = await getOrderById(orderId)
       return response.order
@@ -130,9 +127,9 @@ export default function AdminCustomers() {
       })
       return null
     }
-  }
+  }, [toast])
 
-  const fetchCustomerDetails = async (userId: string) => {
+  const fetchCustomerDetails = useCallback(async (userId: string) => {
     try {
       setOrdersLoading(true)
       const [stats, userDetails] = await Promise.all([
@@ -142,22 +139,30 @@ export default function AdminCustomers() {
       
       setCustomerStats(stats)
       
-      if (stats.recent_orders) {
-        const detailedOrders = await Promise.all(
-          stats.recent_orders.map(async (order: any) => {
-            const detailedOrder = await fetchOrderDetails(order.id)
-            return detailedOrder || order
-          })
-        )
-        
-        setCustomerOrders(detailedOrders)
+      let orders: Order[] = []
+      if (stats.recent_orders?.length) {
+        orders = (await Promise.all(
+          stats.recent_orders.map(order => fetchOrderDetails(order.id))
+        )).filter(Boolean) as Order[]
       }
       
-      setSelectedCustomer(prev => ({
-        ...prev,
+      setCustomerOrders(orders)
+      
+      // Calculate stats from actual orders
+      const orderCount = orders.length
+      const totalSpent = orders.reduce((sum, order) => sum + parseFloat(order.total), 0)
+      const lastOrderDate = orders.length > 0 
+        ? orders.reduce((latest, order) => 
+            new Date(order.created_at) > new Date(latest.created_at) ? order : latest
+          ).created_at
+        : undefined
+
+      setSelectedCustomer({
         ...userDetails.user,
-        joined_date: new Date(userDetails.user.created_at).toLocaleDateString()
-      }))
+        order_count: orderCount,
+        total_spent: totalSpent,
+        last_order_date: lastOrderDate
+      })
     } catch (error) {
       console.error("Failed to fetch customer details:", error)
       toast({
@@ -168,51 +173,80 @@ export default function AdminCustomers() {
     } finally {
       setOrdersLoading(false)
     }
-  }
+  }, [fetchOrderDetails, toast])
 
-  const handleCustomerSelect = async (customer: Customer) => {
+  const fetchCustomers = useCallback(async () => {
+    try {
+      setLoading(true)
+      const data = await getUsersWithOrders()
+      
+      const nonGuestUsers = data.users.filter((user: any) => 
+        !user.email.includes('guest-') && !user.email.includes('@example.com')
+      )
+
+      const formattedCustomers = await Promise.all(
+        nonGuestUsers.map(async (user: any) => {
+          const stats = await getUserStatistics(user.id)
+          return {
+            id: user.id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            email: user.email,
+            phone_number: user.phone_number || undefined,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+            order_count: stats.order_statistics?.total_orders || 0,
+            total_spent: stats.order_statistics?.total_spent || 0,
+            last_order_date: stats.order_statistics?.last_order_date
+          }
+        })
+      )
+
+      formattedCustomers.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+
+      setCustomers(formattedCustomers)
+    } catch (error) {
+      console.error("Failed to fetch customers:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load customers. Please try again later.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [toast])
+
+  useEffect(() => {
+    fetchCustomers()
+  }, [fetchCustomers])
+
+  const handleCustomerSelect = useCallback(async (customer: Customer) => {
     setSelectedCustomer(customer)
     setShowOrders(false)
     setCustomerOrders([])
     setCustomerStats(null)
     await fetchCustomerDetails(customer.id)
-  }
+  }, [fetchCustomerDetails])
 
-  const toggleShowOrders = () => {
-    setShowOrders(!showOrders)
-  }
+  const toggleShowOrders = useCallback(() => {
+    setShowOrders(prev => !prev)
+  }, [])
 
-  const toggleExpandOrder = (orderId: string) => {
-    setExpandedOrder(expandedOrder === orderId ? null : orderId)
-  }
+  const toggleExpandOrder = useCallback((orderId: string) => {
+    setExpandedOrder(prev => prev === orderId ? null : orderId)
+  }, [])
 
-  const formatCurrency = (amount: string | number) => {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount
-    return num.toLocaleString("en-US", {
-      style: "decimal",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }) + " Da"
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  const filteredCustomers = customers.filter((customer) =>
+  const filteredCustomers = customers.filter(customer =>
     `${customer.first_name} ${customer.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
     customer.email.toLowerCase().includes(search.toLowerCase()) ||
     (customer.phone_number && customer.phone_number.toLowerCase().includes(search.toLowerCase()))
   )
 
   return (
-    <div className=" p-4 space-y-4">
+    <div className="p-4 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold">Customers</h2>
         <div className="relative w-full sm:w-64">
@@ -231,24 +265,25 @@ export default function AdminCustomers() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[200px]">Customer ID</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead className="text-center">Customer Full Name</TableHead>
-              <TableHead className="text-right">Email</TableHead>
-              <TableHead className="text-right">Phone number</TableHead>
-              <TableHead className="text-right">Member Since</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead className="text-right">Orders</TableHead>
+              <TableHead className="text-right">Total Spent</TableHead>
+              <TableHead className="text-right">Last Order</TableHead>
+              <TableHead className="text-right">Joined</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   Loading customers...
                 </TableCell>
               </TableRow>
             ) : filteredCustomers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   {search ? "No matching customers found" : "No customers found"}
                 </TableCell>
               </TableRow>
@@ -260,34 +295,25 @@ export default function AdminCustomers() {
                   onClick={() => handleCustomerSelect(customer)}
                 >
                   <TableCell>
-                    <div className="font-medium">
-                      {customer.id}
-                    </div>
-                    
+                    {customer.first_name} {customer.last_name}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      <span className="text-sm">{customer.email}</span>
-                    </div>
-                    {customer.phone_number && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <Phone className="h-4 w-4" />
-                        <span className="text-sm">{customer.phone_number}</span>
-                      </div>
-                    )}
+                    {customer.email}
                   </TableCell>
-                  <TableCell className="text-center">
-                    {customer.orders_count}
+                  <TableCell>
+                    {customer.phone_number || '-'}
                   </TableCell>
                   <TableCell className="text-right">
-                    {formatCurrency(customer.total_spent)}
+                    {customer.order_count}
                   </TableCell>
                   <TableCell className="text-right">
-                    {customer.last_order_date || "Never"}
+                    {customer.total_spent ? formatCurrency(customer.total_spent) : '-'}
                   </TableCell>
                   <TableCell className="text-right">
-                    {customer.joined_date}
+                    {customer.last_order_date ? formatDate(customer.last_order_date) : '-'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatDate(customer.created_at)}
                   </TableCell>
                 </TableRow>
               ))
@@ -330,73 +356,57 @@ export default function AdminCustomers() {
                   )}
                 </div>
 
-                {customerStats?.order_statistics && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Orders</h4>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Total:</span>
-                      <span>{customerStats.order_statistics.total_orders || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Amount Spent:</span>
-                      <span>{formatCurrency(customerStats.order_statistics.total_spent || 0)}</span>
-                    </div>
-                    {customerStats.order_statistics.average_order_value && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Average Order:</span>
-                        <span>
-                          {formatCurrency(
-                            parseFloat(
-                              Number(customerStats.order_statistics.average_order_value || 0).toFixed(0)
-                            )
-                          )}
-                        </span>
-                      </div>
-                    )}
+                <div className="space-y-2">
+                  <h4 className="font-medium">Order Statistics</h4>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total Orders:</span>
+                    <span>{selectedCustomer.order_count}</span>
                   </div>
-                )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Amount Spent:</span>
+                    <span>{formatCurrency(selectedCustomer.total_spent)}</span>
+                  </div>
+                  {customerStats?.order_statistics?.average_order_value && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Average Order:</span>
+                      <span>{formatCurrency(customerStats.order_statistics.average_order_value)}</span>
+                    </div>
+                  )}
+                </div>
 
                 <div className="space-y-2">
                   <h4 className="font-medium">Account</h4>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Joined:</span>
-                    <span>{selectedCustomer.joined_date}</span>
+                    <span>{formatDate(selectedCustomer.created_at)}</span>
                   </div>
-                  {customerStats?.wishlist_items !== undefined && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Wishlist:</span>
-                      <span>{customerStats.wishlist_items}</span>
-                    </div>
-                  )}
-                  {customerStats?.cart_items !== undefined && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Cart Items:</span>
-                      <span>{customerStats.cart_items}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Last Updated:</span>
+                    <span>{formatDate(selectedCustomer.updated_at)}</span>
+                  </div>
                 </div>
 
                 {customerStats?.order_statistics?.favorite_categories?.length > 0 && (
                   <div className="space-y-2">
                     <h4 className="font-medium">Top Categories</h4>
-                    {customerStats.order_statistics.favorite_categories.map((cat: any) => (
+                    {customerStats.order_statistics.favorite_categories.map((cat) => (
                       <div key={cat.category_name} className="flex justify-between">
                         <span className="text-muted-foreground">{cat.category_name}:</span>
-                        <span>{cat.items_ordered}</span>
+                        <span>{cat.items_ordered} items</span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              {customerStats?.order_statistics?.total_orders > 0 && (
+              {selectedCustomer.order_count > 0 && (
                 <div className="pt-4 space-y-4">
                   <Button 
                     variant="outline" 
                     className="w-full flex items-center justify-between"
                     onClick={toggleShowOrders}
                   >
-                    <span>Recent Orders ({customerStats.order_statistics.total_orders})</span>
+                    <span>Recent Orders ({selectedCustomer.order_count})</span>
                     {showOrders ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
 
@@ -449,9 +459,7 @@ export default function AdminCustomers() {
                                     <div className="text-sm space-y-1">
                                       <p>{order.first_name} {order.last_name}</p>
                                       <p>{order.shipping_address}</p>
-                                      <p>
-                                        {order.shipping_city}, {order.shipping_state} 
-                                      </p>
+                                      <p>{order.shipping_city}, {order.shipping_state}</p>
                                       <p>{order.shipping_country}</p>
                                     </div>
                                   </div>

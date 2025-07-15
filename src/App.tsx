@@ -7,6 +7,7 @@ import { CartProvider } from "../providers/cart-provider"
 import { Toaster } from "../components/ui/toaster"
 import Header from "../components/header"
 import Footer from "../components/footer"
+import RequireAdminAuth from "../components/RequireAdminAuth"
 
 // Pages
 import HomePage from "./pages/HomePage"
@@ -51,7 +52,14 @@ function App() {
                 <Route path="/auth/login" element={<LoginPage />} />
                 <Route path="/auth/register" element={<RegisterPage />} />
                 <Route path="/account" element={<AccountPage />} />
-                <Route path="/admin" element={<AdminPage />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <RequireAdminAuth>
+                      <AdminPage />
+                    </RequireAdminAuth>
+                  }
+                />
               </Routes>
             </main>
             <Footer />
