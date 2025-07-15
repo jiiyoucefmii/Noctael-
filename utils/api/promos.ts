@@ -1,4 +1,4 @@
-const API_URL = 'https://noctael.onrender.com'
+const API_URL = 'http://localhost:3001';
 
 if (!API_URL) {
   throw new Error("NEXT_PUBLIC_API_URL is not defined in your .env file")

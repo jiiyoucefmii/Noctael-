@@ -33,7 +33,6 @@ export default function LoginForm() {
         description: `Welcome back, ${user.first_name || "user"}!`,
       })
   
-      window.location.href = "/"
         } catch (userErr: any) {
       try {
         // Try admin login

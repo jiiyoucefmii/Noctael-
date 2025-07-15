@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const API_URL = 'https://noctael.onrender.com'
+const API_URL = 'http://localhost:3001';
 
 export interface ProductVariant {
   id?: string;
