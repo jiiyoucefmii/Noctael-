@@ -129,7 +129,6 @@ export async function getFeaturedProducts(): Promise<Product[]> {
 }
 
 export async function getFeaturedProductsWithLimit(limit: number): Promise<Product[]> {
-  console.log(API_URL)
   if (isNaN(limit) || limit <= 0) {
     throw new Error('Limit must be a positive number');
   }

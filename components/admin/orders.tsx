@@ -59,7 +59,6 @@ interface Order {
   shipping_city: string
   shipping_state: string
   shipping_country: string
-  shipping_zip: string
   items: OrderItem[]
   first_name: string
   last_name: string
@@ -300,7 +299,6 @@ export default function AdminOrders() {
                     <p><span className="text-muted-foreground">City:</span> {selectedOrder.shipping_city}</p>
                     <p><span className="text-muted-foreground">State:</span> {selectedOrder.shipping_state}</p>
                     <p><span className="text-muted-foreground">Country:</span> {selectedOrder.shipping_country}</p>
-                    <p><span className="text-muted-foreground">ZIP:</span> {selectedOrder.shipping_zip}</p>
                   </div>
                 </div>
               </div>

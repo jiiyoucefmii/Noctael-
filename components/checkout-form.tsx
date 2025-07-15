@@ -48,7 +48,6 @@ export default function CheckoutForm() {
     address: "",
     city: "",
     state: "",
-    zip: "",
     country: "Algeria",
   })
 
@@ -86,10 +85,7 @@ export default function CheckoutForm() {
       setUserInfo(userData)
       setFormData((prev) => ({
         ...prev,
-        firstName: userData.first_name || "",
-        lastName: userData.last_name || "",
         email: userData.email || "",
-        phone: userData.phone_number || "",
       }))
 
       const res = await getUserAddresses()
@@ -100,10 +96,8 @@ export default function CheckoutForm() {
         setSelectedAddressId(defaultAddr.id)
         setFormData((prev) => ({
           ...prev,
-          address: defaultAddr.address || "",
           city: defaultAddr.city || "",
           state: defaultAddr.state || "",
-          zip: defaultAddr.zip || "",
         }))
         
         if (states.includes(defaultAddr.state)) {
@@ -140,7 +134,6 @@ export default function CheckoutForm() {
         address: found.address,
         city: found.city,
         state: found.state,
-        zip: found.zip,
       }))
       
       if (availableStates.includes(found.state)) {
@@ -150,9 +143,9 @@ export default function CheckoutForm() {
   }
 
   const findExistingAddress = (): string | null => {
-    const { address, city, state, zip } = formData
+    const { address, city, state } = formData
     const match = addresses.find(
-      (a) => a.address === address && a.city === city && a.state === state && a.zip === zip
+      (a) => a.address === address && a.city === city && a.state === state
     )
     return match ? match.id : null
   }
@@ -187,8 +180,23 @@ export default function CheckoutForm() {
       return
     }
 
-    if (!formData.address || !formData.state) {
-      toast({ title: "Missing address", description: "Enter a valid shipping address", variant: "destructive" })
+    if (
+      !formData.firstName.trim() ||
+      !formData.lastName.trim() ||
+      !formData.phone.trim() ||
+      !formData.address.trim()
+    ) {
+      toast({ title: "Missing info", description: "Please fill in your name, phone, and address.", variant: "destructive" })
+      return
+    }
+
+    if (
+      formData.firstName === userInfo?.first_name ||
+      formData.lastName === userInfo?.last_name ||
+      formData.phone === userInfo?.phone_number ||
+      formData.address === ""
+    ) {
+      toast({ title: "Update required", description: "Please update your name, phone, and address before proceeding.", variant: "destructive" })
       return
     }
 
@@ -201,7 +209,6 @@ export default function CheckoutForm() {
           address: formData.address,
           city: formData.city,
           state: formData.state,
-          zip: formData.zip,
           country: formData.country,
           is_default: false,
         }
@@ -251,7 +258,7 @@ export default function CheckoutForm() {
         <CardHeader>
           <CardTitle>Contact Info</CardTitle>
           <CardDescription>
-            Update your personal information if needed
+            Please enter your personal information. You must update your name and phone number.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -343,7 +350,16 @@ export default function CheckoutForm() {
         <Button
           type="submit"
           className="w-full"
-          disabled={isLoading || isCartLoading || !items.length || !formData.address || !formData.state}
+          disabled={
+            isLoading ||
+            isCartLoading ||
+            !items.length ||
+            !formData.address ||
+            !formData.state ||
+            !formData.firstName ||
+            !formData.lastName ||
+            !formData.phone
+          }
         >
           {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Placing Order...</> : `Place Order (${items.length} items)`}
         </Button>

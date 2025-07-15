@@ -139,7 +139,7 @@ export default function OrderConfirmationPage() {
                 <br />
                 {order.shipping_address.address}
                 <br />
-                {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.zip}
+                {order.shipping_address.city}, {order.shipping_address.state}
                 <br />
                 {order.shipping_address.country}
               </p>

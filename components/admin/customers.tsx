@@ -62,7 +62,6 @@ interface Order {
   shipping_city: string
   shipping_state: string
   shipping_country: string
-  shipping_zip: string
   items: OrderItem[]
   total_items: number
 }
@@ -451,7 +450,7 @@ export default function AdminCustomers() {
                                       <p>{order.first_name} {order.last_name}</p>
                                       <p>{order.shipping_address}</p>
                                       <p>
-                                        {order.shipping_city}, {order.shipping_state} {order.shipping_zip}
+                                        {order.shipping_city}, {order.shipping_state} 
                                       </p>
                                       <p>{order.shipping_country}</p>
                                     </div>
