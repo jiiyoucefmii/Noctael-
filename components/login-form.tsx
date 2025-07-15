@@ -44,6 +44,7 @@ export default function LoginForm() {
           description: `Welcome, ${admin.name || "admin"}!`,
         })
         
+        router.replace("/admin")
       } catch (adminErr: any) {
         toast({
           title: "Login failed",
