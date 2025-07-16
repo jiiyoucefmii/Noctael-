@@ -105,7 +105,16 @@ export default function ProductCard({ product, className }: ProductCardProps) {
         <h3 className="font-bold text-base line-clamp-1 text-center">{product.name}</h3>
         <p className="text-sm text-muted-foreground font-light text-center">Oversized Fit</p>
         <p className="text-sm text-muted-foreground font-light text-center">Black</p>
-        <p className="font-bold text-base pt-1 text-center">{salePrice ? salePrice.toFixed(0) : price.toFixed(0)} Da</p>
+        <div className="font-bold text-base pt-1 text-center flex items-center justify-center gap-2">
+          {salePrice && salePrice > 0 ? (
+            <>
+              <span className="text-red-600">{salePrice.toFixed(0)} Da</span>
+              <span className="text-gray-400 line-through text-sm">{price.toFixed(0)} Da</span>
+            </>
+          ) : (
+            <span>{price.toFixed(0)} Da</span>
+          )}
+        </div>
       </CardContent>
     </Card>
   )

@@ -600,12 +600,12 @@ export default function AdminProducts() {
                 {variantList.length > 0 ? (
                   <div className="space-y-3">
                     {variantList.map((variant, index) => (
-                      <div key={index} className="border p-3 rounded-md bg-gray-50 space-y-2 relative">
+                      <div key={index} className="border p-3 rounded-md bg-gray-50 text-black space-y-2 relative">
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="text-sm font-medium">
-                              {variant.size} / {variant.color} - ${variant.price} 
-                              {variant.sale_price > 0 && ` (Sale: $${variant.sale_price})`} | Stock: {variant.stock}
+                            <p className="text-sm font-medium text-black">
+                              {variant.size} / {variant.color} - {variant.price} Da
+                              {variant.sale_price > 0 && ` (Sale: ${variant.sale_price} Da)`} | Stock: {variant.stock}
                             </p>
                             {variant.id && <p className="text-xs text-gray-500">ID: {variant.id}</p>}
                           </div>
@@ -962,11 +962,11 @@ export default function AdminProducts() {
                         <DialogTrigger asChild>
                           <Button variant="outline" size="sm" className="text-sm">View</Button>
                         </DialogTrigger>
-                        <DialogContent className="w-full" style={{ maxWidth: "50vw" }}>
+                        <DialogContent className="rounded-[5px] border-0 p-6 bg-[#171717] w-full" style={{ maxWidth: "50vw" }}>
                           <DialogHeader>
                             <DialogTitle className="text-xl">Variants - {product.name}</DialogTitle>
                           </DialogHeader>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2">
                             {product.variants?.length > 0 ? (
                               product.variants.map((variant) => (
                                 <div

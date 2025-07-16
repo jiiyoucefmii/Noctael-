@@ -152,7 +152,7 @@ export default function CartItems() {
                     )}
                   </div>
                   <p className="text-base font-medium">
-                    {Number(item.price * item.quantity).toFixed(0)} Da
+                    {Number((item.sale_price && item.sale_price > 0 ? item.sale_price : item.price) * item.quantity).toFixed(0)} Da
                   </p>
                 </div>
 

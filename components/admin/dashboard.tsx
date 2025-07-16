@@ -12,7 +12,8 @@ import {
   ShoppingCart, 
   Users, 
   Tag, 
-  MapPin 
+  MapPin,
+  PhoneCall // Add this import for the waitlist icon
 } from "lucide-react"
 import { 
   LineChart, 
@@ -29,6 +30,7 @@ import { Button } from "@/components/ui/button"
 import AdminProducts from "@/components/admin/products"
 import AdminOrders from "@/components/admin/orders"
 import AdminCustomers from "@/components/admin/customers"
+import AdminWaitlist from "@/components/admin/waitlist" // Add this import
 
 import AdminPromotions from "@/components/admin/promotions"
 import AdminShippingOptions from "@/components/admin/shippingOptions"
@@ -37,11 +39,13 @@ import { getAllOrders, Order } from "@/utils/api/orders"
 import { getUsersWithOrders } from "@/utils/api/users"
 import { getProducts } from "@/utils/api/products"
 
+// Update the tabs array to include the waitlist tab
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "products", label: "Products", icon: Package },
   { id: "orders", label: "Orders", icon: ShoppingCart },
   { id: "customers", label: "Customers", icon: Users },
+  { id: "waitlist", label: "Waitlist", icon: PhoneCall }, // Add this new tab
   { id: "promotions", label: "Promotions", icon: Tag },
   { id: "shipping", label: "Shipping", icon: MapPin },
 ]
@@ -163,6 +167,7 @@ export default function AdminDashboard() {
         {activeTab === "products" && <AdminProducts />}
         {activeTab === "orders" && <AdminOrders />}
         {activeTab === "customers" && <AdminCustomers />}
+        {activeTab === "waitlist" && <AdminWaitlist />}
         {activeTab === "promotions" && <AdminPromotions />}
         {activeTab === "shipping" && <AdminShippingOptions />}
       </div>

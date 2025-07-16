@@ -9,6 +9,7 @@ export interface CartItem {
   quantity: number;
   name: string;
   price: number;
+  sale_price?: number; // Add this field
   color?: string;
   size?: string;
   image?: string;

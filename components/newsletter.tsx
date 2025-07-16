@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 
+
 export default function Newsletter() {
-  const [email, setEmail] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
@@ -18,16 +19,25 @@ export default function Newsletter() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      // Call the API function
+    
+      
+      toast({
+        title: "Success!",
+        description: "You've been added to our waitlist.",
+      })
 
-    toast({
-      title: "Success!",
-      description: "You've been subscribed to our newsletter.",
-    })
-
-    setEmail("")
-    setIsLoading(false)
+      setPhoneNumber("")
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to join waitlist. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -41,8 +51,8 @@ export default function Newsletter() {
             type="tel"
             placeholder="Enter your phone number"
             className="pl-10"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
             required
           />
         </div>
