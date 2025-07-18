@@ -233,7 +233,7 @@ export default function CheckoutForm() {
       }
 
       const orderData = {
-        user_id: user.id,
+        user_id: user.user.id,
         shipping_address_id: addressId,
         cart_id,
         discount_code: discount?.code,
@@ -242,6 +242,8 @@ export default function CheckoutForm() {
         shipping_cost: shipping,
         total,
       }
+      console.log("orderData")
+      console.log(orderData)
       const { order } = await createOrder(orderData)
       toast({ title: "Order placed", description: `Order #${order.id} was created.` })
       router.push(`/order-confirmation?orderId=${order.id}`)

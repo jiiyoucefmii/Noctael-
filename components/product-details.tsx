@@ -195,6 +195,24 @@ export default function ProductDetails({
             <p className="text-gray-600 capitalize">{product.gender}</p>
           </div>
         )}
+        {/* Product Guide Download */}
+        <div>
+          <h3 className="font-medium">Product Guide</h3>
+          {product.guide ? (
+            <a
+              href={product.guide.startsWith("http") ? product.guide : `${process.env.NEXT_PUBLIC_API_URL || ""}${product.guide}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              download
+              className="inline-flex items-center px-3 py-1 rounded bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 mt-2"
+              style={{ textDecoration: "none" }}
+            >
+              Download Guide
+            </a>
+          ) : (
+            <span className="text-xs text-gray-400 mt-2 inline-block">Not provided</span>
+          )}
+        </div>
       </div>
     </div>
   )
