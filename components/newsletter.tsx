@@ -15,8 +15,23 @@ export default function Newsletter() {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
+  const validatePhoneNumber = (number: string) => {
+    const phoneRegex = /^0\d{9}$/
+    return phoneRegex.test(number)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!validatePhoneNumber(phoneNumber)) {
+      toast({
+        title: "Invalid Phone Number",
+        description: "Please enter a valid 10-digit phone number starting with 0.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -53,6 +68,8 @@ export default function Newsletter() {
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             required
+            pattern="^0\d{9}$"
+            title="Phone number must be 10 digits long and start with 0."
           />
         </div>
         <Button 

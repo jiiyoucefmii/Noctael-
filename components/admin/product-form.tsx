@@ -624,7 +624,7 @@ export default function ProductForm({
                         size="sm"
                         onClick={() => handleEditVariant(index)}
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-4 w-4 text-black" />
                       </Button>
                       <Button 
                         variant="ghost" 
