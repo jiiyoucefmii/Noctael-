@@ -109,6 +109,20 @@ interface UserStatistics {
   saved_addresses: number  
 }
 
+
+export interface PaginatedOrdersResponse {
+  orders: Order[];
+  pagination: {
+    totalOrders: number;
+    totalPages: number;
+    currentPage: number;
+    ordersPerPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+
 // =================== User ===================
 
 export async function getUserOrders(): Promise<{ orders: Order[]; count: number }> {
@@ -195,5 +209,15 @@ export async function getUserStatistics(userId: string): Promise<UserStatistics>
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch user statistics');
+  }
+}
+
+
+export async function getPaginatedOrders(page = 1, limit = 10): Promise<PaginatedOrdersResponse> {
+  try {
+    const response = await axiosInstance.get(`/orders/paged?page=${page}&limit=${limit}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch paginated orders');
   }
 }
