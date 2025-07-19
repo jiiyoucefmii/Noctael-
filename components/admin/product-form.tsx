@@ -348,7 +348,7 @@ export default function ProductForm({
       is_on_sale: newProduct.is_on_sale,
       colors: Array.from(new Set(variantList.map((v) => v.color))),
       sizes: Array.from(new Set(variantList.map((v) => v.size))),
-      guide: newProduct.guide || null, // Include the guide URL
+      guide: newProduct.guide || null,
     }
     const updated = await updateProduct(productId, productData)
     const updatedProduct = updated.product
