@@ -13,7 +13,9 @@ import {
   Users, 
   Tag, 
   MapPin,
-  PhoneCall // Add this import for the waitlist icon
+  PhoneCall,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react"
 import { 
   LineChart, 
@@ -30,8 +32,7 @@ import { Button } from "@/components/ui/button"
 import AdminProducts from "@/components/admin/products"
 import AdminOrders from "@/components/admin/orders"
 import AdminCustomers from "@/components/admin/customers"
-import AdminWaitlist from "@/components/admin/waitlist" // Add this import
-
+import AdminWaitlist from "@/components/admin/waitlist"
 import AdminPromotions from "@/components/admin/promotions"
 import AdminShippingOptions from "@/components/admin/shippingOptions"
 
@@ -45,7 +46,7 @@ const tabs = [
   { id: "products", label: "Products", icon: Package },
   { id: "orders", label: "Orders", icon: ShoppingCart },
   { id: "customers", label: "Customers", icon: Users },
-  { id: "waitlist", label: "Waitlist", icon: PhoneCall }, // Add this new tab
+  { id: "waitlist", label: "Waitlist", icon: PhoneCall },
   { id: "promotions", label: "Promotions", icon: Tag },
   { id: "shipping", label: "Shipping", icon: MapPin },
 ]
@@ -60,6 +61,7 @@ export default function AdminDashboard() {
     salesData: [] as { name: string; sales: number; orders: number }[]
   })
   const [loading, setLoading] = useState(true)
+  const [sidebarVisible, setSidebarVisible] = useState(true)
 
   useEffect(() => {
     if (activeTab === "dashboard") fetchDashboardData()
@@ -123,14 +125,40 @@ export default function AdminDashboard() {
     })
   }
 
+  const toggleSidebar = () => {
+    setSidebarVisible(!sidebarVisible)
+  }
+
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen relative">
+      {/* Sidebar Toggle Button (visible when sidebar is hidden) */}
+      {!sidebarVisible && (
+        <button 
+          onClick={toggleSidebar}
+          className="fixed left-0 top-20 z-10 bg-[#171717] text-white p-2 rounded-r-md shadow-md"
+          aria-label="Show sidebar"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      )}
+
       {/* Sidebar */}
-      <div className="w-64 border-0 bg-[#171717] relative text-white"> {/* Updated styling */}
-        <div className="flex h-16 items-center border-b border-gray-800 px-6">
+      <div 
+        className={`w-64 border-0 bg-[#171717] text-white transition-all duration-300 ease-in-out ${
+          sidebarVisible ? 'translate-x-0' : '-translate-x-full'
+        } absolute h-full z-10`}
+      > 
+        <div className="flex h-16 items-center border-b border-gray-800 px-6 justify-between">
           <Link href="/admin" className="flex items-center font-semibold text-white">
             <Box className="mr-2 h-6 w-6" /> Noctael Admin
           </Link>
+          <button 
+            onClick={toggleSidebar} 
+            className="text-gray-400 hover:text-white"
+            aria-label="Hide sidebar"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
         </div>
         <div className="p-4">
           <nav className="space-y-1">
@@ -162,7 +190,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6">
+      <div className={`flex-1 p-6 transition-all duration-300 ease-in-out ${sidebarVisible ? '' : 'ml-0'}`}>
         {activeTab === "dashboard" && <AdminDashboardContent data={dashboardData} loading={loading} />}
         {activeTab === "products" && <AdminProducts />}
         {activeTab === "orders" && <AdminOrders />}
@@ -273,14 +301,14 @@ function StatCard({ icon, title, value, bgColor }: {
   bgColor: string 
 }) {
   return (
-    <div className="rounded-[5px] border-0 p-6 bg-[#171717]">
+    <div className="rounded-[5px] border-0 p-4 md:p-6 bg-[#171717]">
       <div className="flex items-center">
-        <div className={`rounded-full ${bgColor} p-3`}>
+        <div className={`rounded-full ${bgColor} p-2 md:p-3`}>
           {icon}
         </div>
-        <div className="ml-4">
-          <p className="text-sm text-gray-500">{title}</p>
-          <h3 className="text-2xl font-bold">{value}</h3>
+        <div className="ml-3 md:ml-4">
+          <p className="text-xs md:text-sm text-gray-500">{title}</p>
+          <h3 className="text-xl md:text-2xl font-bold">{value}</h3>
         </div>
       </div>
     </div>
@@ -291,13 +319,13 @@ function OrderCard({ order }: { order: Order }) {
   return (
     <div className="flex items-center justify-between border-b pb-3">
       <div>
-        <p className="font-medium">Order #{order.id.slice(0, 8)}</p>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm md:text-base font-medium">Order #{order.id.slice(0, 8)}</p>
+        <p className="text-xs md:text-sm text-gray-500">
           {new Date(order.created_at).toLocaleDateString()}
         </p>
       </div>
       <div className="text-right">
-        <p className="font-medium">{Number(order.total).toFixed(0)} Da</p>
+        <p className="text-sm md:text-base font-medium">{Number(order.total).toFixed(0)} Da</p>
         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
             order.status === 'accepted' 
               ? 'bg-green-100 text-green-800' 

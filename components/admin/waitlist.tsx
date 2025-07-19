@@ -75,6 +75,7 @@ export default function AdminWaitlist() {
   )
 
   return (
+    // Update the main component layout
     <div className="p-4 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold">Waitlist</h2>
@@ -89,8 +90,8 @@ export default function AdminWaitlist() {
           />
         </div>
       </div>
-
-      <div className="rounded-[5px] border-0 p-6 bg-[#171717]">
+    
+      <div className="rounded-[5px] border-0 p-4 sm:p-6 bg-[#171717] overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

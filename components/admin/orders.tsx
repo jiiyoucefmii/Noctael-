@@ -163,12 +163,12 @@ export default function AdminOrders() {
   })
 
   return (
-    <div className="rounded-[5px] border-0 p-6 bg-[#171717]">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Orders</h1>
+    <div className="rounded-[5px] border-0 p-4 sm:p-6 bg-[#171717] w-full">
+      <div className="flex justify-between items-center mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold">Orders</h1>
       </div>
 
-      <div className="mb-6 flex gap-4">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-2 sm:gap-4">
         <div className="relative w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
           <Input
@@ -180,7 +180,7 @@ export default function AdminOrders() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
@@ -192,15 +192,15 @@ export default function AdminOrders() {
         </Select>
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
+      <div className="rounded-lg border overflow-x-auto w-full">
+        <Table className="w-full">
           <TableHeader>
             <TableRow>
-              <TableHead>Order ID</TableHead>
+              <TableHead className="hidden sm:table-cell">Order ID</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead className="hidden sm:table-cell">Total</TableHead>
+              <TableHead className="hidden sm:table-cell">Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -220,49 +220,53 @@ export default function AdminOrders() {
             ) : (
               filteredOrders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell>{order.id}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{order.id}</TableCell>
                   <TableCell>{order.user_name}</TableCell>
                   <TableCell>
                     <Badge
-                      className={`text-white px-2 py-1 rounded-md text-xs font-medium ${
-                        order.status === "pending"
-                          ? "bg-yellow-500"
-                          : order.status === "accepted"
+                      className={`text-white px-2 py-1 rounded-md text-xs font-medium ${order.status === "pending"
+                        ? "bg-yellow-500"
+                        : order.status === "accepted"
                           ? "bg-green-600"
                           : "bg-blue-600"
-                      }`}
+                        }`}
                     >
                       {order.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{Number(order.total).toFixed(0)} Da</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">{Number(order.total).toFixed(0)} Da</TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     {new Date(order.created_at).toLocaleDateString()}
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleViewDetails(order)}
-                    >
-                      View Details
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleStatusChange(order, "accepted")}
-                      disabled={order.status !== "pending"}
-                    >
-                      Accept
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleStatusChange(order, "shipped")}
-                      disabled={order.status !== "accepted"}
-                    >
-                      Mark Shipped
-                    </Button>
+                  <TableCell className="text-right">
+                    <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 items-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={() => handleViewDetails(order)}
+                      >
+                        View Details
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={() => handleStatusChange(order, "accepted")}
+                        disabled={order.status !== "pending"}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={() => handleStatusChange(order, "shipped")}
+                        disabled={order.status !== "accepted"}
+                      >
+                        Mark Shipped
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -272,7 +276,7 @@ export default function AdminOrders() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="rounded-[5px] border-0 p-6 bg-[#171717] sm:max-w-2xl">
+        <DialogContent className="rounded-[5px] border-0 p-4 sm:p-6 bg-[#171717] w-[95vw] max-w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Order Details</DialogTitle>
             <DialogDescription>
@@ -281,7 +285,7 @@ export default function AdminOrders() {
           </DialogHeader>
           
           {selectedOrder && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-medium mb-2">Customer Information</h3>
@@ -305,8 +309,8 @@ export default function AdminOrders() {
 
               <div>
                 <h3 className="font-medium mb-2">Order Summary</h3>
-                <div className="border rounded-lg">
-                  <Table>
+                <div className="border rounded-lg overflow-x-auto">
+                  <Table className="w-full">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Product</TableHead>
@@ -319,7 +323,7 @@ export default function AdminOrders() {
                       {selectedOrder.items.map((item) => (
                         <TableRow key={item.item_id}>
                           <TableCell>
-                            <div className="flex items-center gap-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                               <div className="relative h-16 w-16 rounded-md overflow-hidden">
                                 <Image
                                   src={getFullImageUrl(item.image)}
@@ -330,16 +334,16 @@ export default function AdminOrders() {
                                 />
                               </div>
                               <div>
-                                <p className="font-medium">{item.product_name}</p>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="font-medium text-sm sm:text-base">{item.product_name}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground">
                                   {item.color} / {item.size}
                                 </p>
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>{item.price.toFixed(0)} Da</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell>${(item.price * item.quantity).toFixed(0)} Da</TableCell>
+                          <TableCell className="text-xs sm:text-sm">{item.price.toFixed(0)} Da</TableCell>
+                          <TableCell className="text-xs sm:text-sm">{item.quantity}</TableCell>
+                          <TableCell className="text-xs sm:text-sm">${(item.price * item.quantity).toFixed(0)} Da</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -366,15 +370,17 @@ export default function AdminOrders() {
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 mt-4">
             <Button
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => setIsDialogOpen(false)}
             >
               Close
             </Button>
             {selectedOrder?.status === "pending" && (
               <Button
+                className="w-full sm:w-auto"
                 onClick={() => {
                   handleStatusChange(selectedOrder, "accepted")
                   setIsDialogOpen(false)
@@ -385,6 +391,7 @@ export default function AdminOrders() {
             )}
             {selectedOrder?.status === "accepted" && (
               <Button
+                className="w-full sm:w-auto"
                 onClick={() => {
                   handleStatusChange(selectedOrder, "shipped")
                   setIsDialogOpen(false)
