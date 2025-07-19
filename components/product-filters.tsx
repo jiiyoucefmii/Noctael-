@@ -19,7 +19,6 @@ const genders = [
   { id: "unisex", name: "Unisex" },
 ]
 
-
 export default function ProductFilters() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -27,7 +26,6 @@ export default function ProductFilters() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch categories on component mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -44,50 +42,62 @@ export default function ProductFilters() {
     fetchCategories()
   }, [])
 
-  // Get current filters as arrays
   const currentCategories = searchParams?.getAll('category') || []
   const currentGenders = searchParams?.getAll('gender') || []
   const currentSort = searchParams?.get('sort') || 'relevancy'
   const isNew = searchParams?.has('new')
   const isOnSale = searchParams?.has('sale')
 
-  const toggleFilter = (name: string, value: string) => {
+  const updateParams = (newParams: Record<string, string | string[]>) => {
     const params = new URLSearchParams(searchParams?.toString())
-    const currentValues = params.getAll(name)
     
-    if (currentValues.includes(value)) {
-      // Remove the value if already present
-      const newValues = currentValues.filter(v => v !== value)
-      params.delete(name)
-      newValues.forEach(v => params.append(name, v))
-    } else {
-      // Add the value if not present
-      params.append(name, value)
-    }
+    // Always reset to first page when filters change
+    params.delete('page')
+    
+    Object.entries(newParams).forEach(([key, value]) => {
+      params.delete(key)
+      if (Array.isArray(value)) {
+        value.forEach(v => params.append(key, v))
+      } else {
+        params.set(key, value)
+      }
+    })
     
     router.push(`/products?${params.toString()}`, { scroll: false })
+  }
+
+  const toggleFilter = (name: string, value: string) => {
+    const currentValues = searchParams?.getAll(name) || []
+    
+    if (currentValues.includes(value)) {
+      updateParams({
+        [name]: currentValues.filter(v => v !== value)
+      })
+    } else {
+      updateParams({
+        [name]: [...currentValues, value]
+      })
+    }
   }
 
   const toggleSpecialFilter = (name: string) => {
-    const params = new URLSearchParams(searchParams?.toString())
-    
-    if (params.has(name)) {
+    if (searchParams?.has(name)) {
+      const params = new URLSearchParams(searchParams.toString())
       params.delete(name)
+      params.delete('page')
+      router.push(`/products?${params.toString()}`, { scroll: false })
     } else {
+      const params = new URLSearchParams(searchParams?.toString())
       params.set(name, 'true')
+      params.delete('page')
+      router.push(`/products?${params.toString()}`, { scroll: false })
     }
-    
-    router.push(`/products?${params.toString()}`, { scroll: false })
   }
 
   const handleSortChange = (value: string) => {
-    const params = new URLSearchParams(searchParams?.toString())
-    if (value === 'relevancy') {
-      params.delete('sort')
-    } else {
-      params.set('sort', value)
-    }
-    router.push(`/products?${params.toString()}`, { scroll: false })
+    updateParams({
+      sort: value === 'relevancy' ? '' : value
+    })
   }
 
   const clearFilters = () => {
@@ -104,7 +114,6 @@ export default function ProductFilters() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-foreground">FILTER & SORT</h2>
         <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
@@ -113,7 +122,6 @@ export default function ProductFilters() {
       </div>
 
       <Accordion type="multiple" defaultValue={["sort"]} className="space-y-4">
-        {/* Sort By Section */}
         <AccordionItem value="sort" className="border-0">
           <AccordionTrigger className="py-2 hover:no-underline">
             <h3 className="font-medium text-foreground">SORT BY</h3>
@@ -142,7 +150,6 @@ export default function ProductFilters() {
 
         <hr className="border-border" />
 
-        {/* Product Type (Categories) */}
         <AccordionItem value="categories" className="border-0">
           <AccordionTrigger className="py-2 hover:no-underline">
             <h3 className="font-medium text-foreground">PRODUCT TYPE</h3>
@@ -167,7 +174,6 @@ export default function ProductFilters() {
 
         <hr className="border-border" />
 
-        {/* Gender */}
         <AccordionItem value="gender" className="border-0">
           <AccordionTrigger className="py-2 hover:no-underline">
             <h3 className="font-medium text-foreground">GENDER</h3>

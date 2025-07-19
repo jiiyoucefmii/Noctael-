@@ -60,6 +60,21 @@ export interface ProductsQueryParams {
   page?: number;
 }
 
+export interface PaginatedProductsResponse {
+  products: Product[];
+  count: number;
+  pagination: {
+    total: number;
+    total_pages: number;
+    current_page: number;
+    per_page: number;
+    has_next_page: boolean;
+    has_previous_page: boolean;
+  };
+}
+
+
+
 const axiosInstance = axios.create({
   baseURL: API_URL,
   withCredentials: true,
@@ -172,6 +187,13 @@ export async function getVariantsByColor(productId: string, color: string): Prom
   );
   return res.data.variants;
 }
+
+
+export async function getPaginatedProducts(params: ProductsQueryParams): Promise<PaginatedProductsResponse> {
+  const res = await axiosInstance.get<PaginatedProductsResponse>('/products/paginated', { params });
+  return res.data;
+}
+
 
 export async function checkVariantAvailability(
   productId: string,
