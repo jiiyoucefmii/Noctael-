@@ -48,7 +48,7 @@ export default function CheckoutForm() {
     address: "",
     city: "",
     state: "",
-    country: "Algeria",
+    // Removed country field
   })
 
   const router = useRouter()
@@ -209,7 +209,7 @@ export default function CheckoutForm() {
           address: formData.address,
           city: formData.city,
           state: formData.state,
-          country: formData.country,
+          // Removed country field from payload
           is_default: false,
         }
         const { address } = await createAddress(payload)
@@ -328,10 +328,7 @@ export default function CheckoutForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <Input id="country" value={formData.country} disabled />
-            </div>
+            {/* Removed country field */}
             <div className="space-y-2">
               <Label>Shipping Type</Label>
               <Select value={shippingType} onValueChange={(value: 'to_home' | 'to_desk') => setShippingType(value)}>

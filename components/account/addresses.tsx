@@ -39,7 +39,7 @@ export default function AccountAddresses() {
     address: "",
     city: "",
     state: "",
-    country: "Algeria",
+    // Removed country field
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { toast } = useToast()
@@ -75,7 +75,7 @@ export default function AccountAddresses() {
       address: "",
       city: "",
       state: "",
-      country: "Algeria",
+      // Removed country field
     })
   }
 
@@ -102,7 +102,14 @@ export default function AccountAddresses() {
   }
 
   const handleEdit = (address: Address) => {
-    setFormData({ ...address, country: "Algeria" }) // Enforce Algeria on edit
+    setFormData({ 
+      id: address.id,
+      name: address.name,
+      address: address.address,
+      city: address.city,
+      state: address.state,
+      // Removed country field and enforcement
+    }) 
     setIsDialogOpen(true)
   }
 
@@ -155,11 +162,8 @@ export default function AccountAddresses() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="country">Country</Label>
-                <Input id="country" value="Algeria" disabled />
-              </div>
-
+              {/* Removed country field */}
+              
               <div className="space-y-2">
                 <Label htmlFor="state">State</Label>
                 <select
@@ -229,7 +233,7 @@ export default function AccountAddresses() {
                 <div className="mt-2 text-sm text-gray-500">
                   <p>{address.address}</p>
                   <p>{address.city}, {address.state}</p>
-                  <p>{address.country}</p>
+                  {/* Removed country display */}
                 </div>
                 {!address.is_default && (
                   <Button variant="outline" size="sm" className="mt-4" onClick={() => handleSetDefault(address.id!)}>

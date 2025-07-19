@@ -13,7 +13,9 @@ interface OrderDetailsPageProps {
 }
 
 export default async function OrderDetailsPage({ params }: OrderDetailsPageProps) {
-  const { order } = await getOrderById(params.id)
+  // Await the params object before accessing its properties
+  const { id } = await params
+  const { order } = await getOrderById(id)
 
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString("en-US", {
@@ -154,7 +156,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                 <p className="text-muted-foreground">
                   {order.shipping_city}, {order.shipping_state}
                 </p>
-                <p className="text-muted-foreground">{order.shipping_country}</p>
+                {/* Removed country line */}
               </CardContent>
             </Card>
           </div>

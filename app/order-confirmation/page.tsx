@@ -140,8 +140,7 @@ export default function OrderConfirmationPage() {
               {order.shipping_address}
               <br />
               {order.shipping_city}, {order.shipping_state} 
-              <br />
-              {order.shipping_country}
+              {/* Removed country line */}
             </p>
           </div>
 

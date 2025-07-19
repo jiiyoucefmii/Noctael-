@@ -234,13 +234,17 @@ export default function Header() {
               </Button>
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-40 rounded-md bg-background shadow-lg border z-50">
-                  <Link
+                  <a
                     href="/account"
                     className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
-                    onClick={() => setShowDropdown(false)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowDropdown(false);
+                      router.push('/account');
+                    }}
                   >
                     Profile
-                  </Link>
+                  </a>
                   <button
                     className="block w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors"
                     onClick={handleLogout}
