@@ -195,20 +195,35 @@ export default function ProductDetails({
             <p className="text-gray-600 capitalize">{product.gender}</p>
           </div>
         )}
-        {/* Product Guide Download */}
+        {/* Product Guide */}
         <div>
           <h3 className="font-medium">Product Guide</h3>
           {product.guide ? (
-            <a
-              href={product.guide.startsWith("http") ? product.guide : `${process.env.NEXT_PUBLIC_API_URL || ""}${product.guide}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              download
-              className="inline-flex items-center px-3 py-1 rounded bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 mt-2"
-              style={{ textDecoration: "none" }}
-            >
-              Download Guide
-            </a>
+            <div className="mt-2 w-full">
+              <div className="relative w-full rounded overflow-hidden border border-gray-200">
+                <div className="aspect-[16/9] sm:aspect-[4/3] md:aspect-[16/9] lg:aspect-auto lg:h-[500px]">
+                  <iframe
+                    src={`${product.guide.startsWith("http") ? product.guide : `${process.env.NEXT_PUBLIC_API_URL || ""}${product.guide}`}#toolbar=0&navpanes=0`}
+                    className="absolute inset-0 w-full h-full"
+                    title="Product Guide"
+                    frameBorder="0"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+              <div className="mt-2 flex justify-end">
+                <a
+                  href={product.guide.startsWith("http") ? product.guide : `${process.env.NEXT_PUBLIC_API_URL || ""}${product.guide}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download
+                  className="inline-flex items-center px-3 py-1 rounded bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  style={{ textDecoration: "none" }}
+                >
+                  Download Guide
+                </a>
+              </div>
+            </div>
           ) : (
             <span className="text-xs text-gray-400 mt-2 inline-block">Not provided</span>
           )}
