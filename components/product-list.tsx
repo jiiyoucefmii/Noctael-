@@ -147,7 +147,7 @@ interface ProductListProps {
 export default function ProductList({ 
   allProducts, 
   totalProducts,
-  pageSize = 10
+  pageSize = 12
 }: ProductListProps) {
   const searchParams = useSearchParams()
   const currentPage = parseInt(searchParams?.get('page') || '1', 10) || 1
