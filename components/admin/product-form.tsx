@@ -348,8 +348,8 @@ export default function ProductForm({
       is_on_sale: newProduct.is_on_sale,
       colors: Array.from(new Set(variantList.map((v) => v.color))),
       sizes: Array.from(new Set(variantList.map((v) => v.size))),
+      guide: newProduct.guide || null, // Include the guide URL
     }
-
     const updated = await updateProduct(productId, productData)
     const updatedProduct = updated.product
 
@@ -391,7 +391,15 @@ export default function ProductForm({
     setGuideUploading(true)
     try {
       const res = await uploadProductGuide(prodId, guideFile)
-      setGuideUrl(res.guide_url.startsWith("http") ? res.guide_url : `${API_URL}${res.guide_url}`)
+      const newGuideUrl = res.guide_url.startsWith("http") ? res.guide_url : `${API_URL}${res.guide_url}`
+      
+      // Update the product state with the new guide URL
+      setNewProduct(prev => ({
+        ...prev,
+        guide: newGuideUrl
+      }))
+      
+      setGuideUrl(newGuideUrl)
       toast({
         title: "Guide uploaded",
         description: "Product guide PDF uploaded successfully."

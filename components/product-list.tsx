@@ -149,13 +149,14 @@ export default function ProductList({
   totalProducts,
   pageSize = 12
 }: ProductListProps) {
-  const searchParams = useSearchParams()
+   const searchParams = useSearchParams()
   const currentPage = parseInt(searchParams?.get('page') || '1', 10) || 1
 
-  // Get all filter params from URL as arrays
+  // Get all filter params
   const categories = searchParams?.getAll('category') || []
   const genders = searchParams?.getAll('gender') || []
   const isNew = searchParams?.has('new')
+  const isFeatured = searchParams?.has('featured')
   const isOnSale = searchParams?.has('sale')
   const sort = searchParams?.get('sort')
 
@@ -163,23 +164,29 @@ export default function ProductList({
   const filteredProducts = useMemo(() => {
     let result = [...allProducts]
 
+    // Apply category filters
     if (categories.length > 0) {
       result = result.filter(product => categories.includes(product.category_id))
     }
 
+    // Apply gender filters
     if (genders.length > 0) {
       result = result.filter(product => genders.includes(product.gender))
     }
 
+    // Apply special filters
     if (isNew) {
       result = result.filter(product => product.is_new)
+    }
+    if (isFeatured) {
+      result = result.filter(product => product.is_featured)
     }
     if (isOnSale) {
       result = result.filter(product => product.is_on_sale)
     }
 
     return result
-  }, [allProducts, categories, genders, isNew, isOnSale])
+  }, [allProducts, categories, genders, isNew, isFeatured, isOnSale])
 
   // Sort products
   const sortedProducts = useMemo(() => {
