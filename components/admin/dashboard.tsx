@@ -37,7 +37,7 @@ import AdminPromotions from "@/components/admin/promotions"
 import AdminShippingOptions from "@/components/admin/shippingOptions"
 
 import { getAllOrders, Order } from "@/utils/api/orders"
-import { getUsersWithOrders } from "@/utils/api/users"
+import { getUsersWithOrders, logoutUser } from "@/utils/api/users"
 import { getProducts } from "@/utils/api/products"
 
 // Update the tabs array to include the waitlist tab
@@ -129,6 +129,15 @@ export default function AdminDashboard() {
     setSidebarVisible(!sidebarVisible)
   }
 
+  const handleLogout = async () => {
+    try {
+      await logoutUser()
+      window.location.href = "/auth/login"
+    } catch (err) {
+      // Optionally handle error
+    }
+  }
+
   return (
     <div className="flex min-h-screen relative">
       {/* Sidebar Toggle Button (visible when sidebar is hidden) */}
@@ -183,7 +192,11 @@ export default function AdminDashboard() {
               View Store
             </Link>
           </Button>
-          <Button variant="outline" className="w-full justify-start text-red-500 border-gray-700 hover:bg-gray-800 hover:text-red-400">
+          <Button
+            variant="outline"
+            className="w-full justify-start text-red-500 border-gray-700 hover:bg-gray-800 hover:text-red-400"
+            onClick={handleLogout}
+          >
             <LogOut className="mr-2 h-4 w-4" /> Logout
           </Button>
         </div>
