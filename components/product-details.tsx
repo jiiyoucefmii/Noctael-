@@ -201,13 +201,15 @@ export default function ProductDetails({
           {product.guide ? (
             <div className="mt-2 w-full">
               <div className="relative w-full rounded overflow-hidden border border-gray-200">
-                <div className="aspect-[16/9] sm:aspect-[4/3] md:aspect-[16/9] lg:aspect-auto lg:h-[500px]">
+                <div className="w-full max-w-full sm:max-w-[700px] h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px] overflow-hidden">
                   <iframe
-                    src={`${product.guide.startsWith("http") ? product.guide : `${process.env.NEXT_PUBLIC_API_URL || ""}${product.guide}`}#toolbar=0&navpanes=0`}
-                    className="absolute inset-0 w-full h-full"
+                    src={`${product.guide.startsWith("http") ? product.guide : `${process.env.NEXT_PUBLIC_API_URL || ""}${product.guide}`}#toolbar=0&navpanes=0&view=FitH&scrollbar=0`}
+                    className="w-full h-full"
                     title="Product Guide"
                     frameBorder="0"
                     allowFullScreen
+                    style={{ overflow: 'hidden' }}
+                    scrolling="no"
                   />
                 </div>
               </div>
