@@ -16,6 +16,7 @@ import {
   createProduct, updateProduct, getProductById, 
   addProductVariant, updateProductVariant,
   type Product, type ProductVariant, type ProductImage,
+  deleteProductVariant,
 } from "@/utils/api/products"
 import { createCategory, type Category } from "@/utils/api/categories"
 import { uploadVariantImages, getVariantImages, deleteImage, uploadProductGuide } from "@/utils/api/upload"
@@ -61,7 +62,7 @@ export default function ProductForm({
     color: string;
     size: string;
     price: number;
-    sale_price: number;
+    sale_price: number | null;
     stock: number;
     images: File[];
     existingImages: ProductImage[];
@@ -70,7 +71,7 @@ export default function ProductForm({
     color: "",
     size: "",
     price: 0,
-    sale_price: 0,
+    sale_price: null,
     stock: 0,
     images: [],
     existingImages: [],
@@ -98,6 +99,24 @@ export default function ProductForm({
     }
   }, [productId])
 
+  // Effect to reset sale prices when on sale is toggled off
+  useEffect(() => {
+    if (!newProduct.is_on_sale) {
+      // Reset all variant sale prices to null when product is not on sale
+      setVariantList(prevList => 
+        prevList.map(variant => ({
+          ...variant,
+          sale_price: null
+        }))
+      )
+      // Also reset the current variant being edited
+      setNewVariant(prev => ({
+        ...prev,
+        sale_price: null
+      }))
+    }
+  }, [newProduct.is_on_sale])
+
   const resetForm = () => {
     setNewProduct({
       name: "",
@@ -116,7 +135,7 @@ export default function ProductForm({
       color: "",
       size: "",
       price: 0,
-      sale_price: 0,
+      sale_price: null,
       stock: 0,
       images: [],
       existingImages: [],
@@ -141,6 +160,11 @@ export default function ProductForm({
         sizes: product.sizes,
       })
 
+      // Set guide URL if exists
+      if (product.guide) {
+        setGuideUrl(product.guide)
+      }
+
       // Load variants with their images
       const variantsWithFiles = await Promise.all(
         product.variants.map(async (v) => {
@@ -150,7 +174,7 @@ export default function ProductForm({
             color: v.color,
             size: v.size,
             price: Number(v.price),
-            sale_price: Number(v.sale_price) || 0,
+            sale_price: product.is_on_sale && v.sale_price ? Number(v.sale_price) : null,
             stock: Number(v.stock),
             images: [] as File[],
             existingImages: imagesResponse.images || [],
@@ -173,27 +197,49 @@ export default function ProductForm({
   }
 
   const handleAddVariant = () => {
+    const variantToAdd = {
+      ...newVariant,
+      sale_price: newProduct.is_on_sale ? newVariant.sale_price : null
+    }
+
     if (editingVariantIndex !== null) {
       // Update existing variant
       const updatedList = [...variantList]
-      updatedList[editingVariantIndex] = { ...newVariant }
+      updatedList[editingVariantIndex] = variantToAdd
       setVariantList(updatedList)
       setEditingVariantIndex(null)
     } else {
       // Add new variant
-      setVariantList([...variantList, { ...newVariant }])
+      setVariantList([...variantList, variantToAdd])
     }
+
+    // Update product colors and sizes based on all variants
+    updateProductColorsAndSizes([...variantList.slice(0, editingVariantIndex === null ? undefined : editingVariantIndex), 
+                                  variantToAdd, 
+                                  ...(editingVariantIndex !== null ? variantList.slice(editingVariantIndex + 1) : [])])
+
     setNewVariant({
       id: "",
       color: "",
       size: "",
       price: 0,
-      sale_price: 0,
+      sale_price: null,
       stock: 0,
       images: [],
       existingImages: [],
     })
     setVariantDialogOpen(false)
+  }
+
+  const updateProductColorsAndSizes = (variants: typeof variantList) => {
+    const colors = Array.from(new Set(variants.map(v => v.color).filter(Boolean)))
+    const sizes = Array.from(new Set(variants.map(v => v.size).filter(Boolean)))
+    
+    setNewProduct(prev => ({
+      ...prev,
+      colors,
+      sizes
+    }))
   }
 
   const handleEditVariant = (index: number) => {
@@ -202,10 +248,35 @@ export default function ProductForm({
     setVariantDialogOpen(true)
   }
 
-  const handleRemoveVariant = (index: number) => {
-    const newList = [...variantList]
-    newList.splice(index, 1)
-    setVariantList(newList)
+  const handleRemoveVariant = async (index: number) => {
+    const variantToRemove = variantList[index];
+    
+    // If the variant has an ID, it exists on the server and needs to be deleted
+    if (variantToRemove.id) {
+      try {
+        await deleteProductVariant(variantToRemove.id);
+        toast({
+          title: "Variant deleted",
+          description: "Product variant has been successfully removed."
+        });
+      } catch (error) {
+        console.error(error);
+        toast({
+          title: "Error",
+          description: "Failed to delete variant. Please try again.",
+          variant: "destructive"
+        });
+        return; // Don't remove from local state if API call failed
+      }
+    }
+    
+    // Remove from local state
+    const newList = [...variantList];
+    newList.splice(index, 1);
+    setVariantList(newList);
+
+    // Update product colors and sizes after removing variant
+    updateProductColorsAndSizes(newList);
   }
 
   const handleRemoveVariantImage = async (variantIndex: number, imageIndex: number, imageId?: string) => {
@@ -235,6 +306,42 @@ export default function ProductForm({
       const newList = [...variantList]
       newList[variantIndex].images.splice(imageIndex, 1)
       setVariantList(newList)
+    }
+  }
+
+  // NEW: Handle removing images from the current variant being edited in the dialog
+  const handleRemoveNewVariantImage = (imageIndex: number) => {
+    const newImages = [...newVariant.images]
+    newImages.splice(imageIndex, 1)
+    setNewVariant(prev => ({ ...prev, images: newImages }))
+  }
+
+  // NEW: Handle removing existing images from the current variant being edited in the dialog
+  const handleRemoveNewVariantExistingImage = async (imageIndex: number) => {
+    const imageToDelete = newVariant.existingImages[imageIndex]
+    if (imageToDelete.id) {
+      try {
+        await deleteImage(imageToDelete.id)
+        const newExistingImages = [...newVariant.existingImages]
+        newExistingImages.splice(imageIndex, 1)
+        setNewVariant(prev => ({ ...prev, existingImages: newExistingImages }))
+        toast({
+          title: "Image deleted",
+          description: "Image has been successfully removed."
+        })
+      } catch (error) {
+        console.error(error)
+        toast({
+          title: "Error",
+          description: "Failed to delete image. Please try again.",
+          variant: "destructive"
+        })
+      }
+    } else {
+      // Just remove from local state if no ID
+      const newExistingImages = [...newVariant.existingImages]
+      newExistingImages.splice(imageIndex, 1)
+      setNewVariant(prev => ({ ...prev, existingImages: newExistingImages }))
     }
   }
 
@@ -272,6 +379,25 @@ export default function ProductForm({
     }
   }
 
+  // NEW: Handle adding new color to the product
+  const handleAddNewColor = () => {
+    if (newColor && !newProduct.colors?.includes(newColor)) {
+      setNewProduct(prev => ({
+        ...prev,
+        colors: [...(prev.colors || []), newColor]
+      }))
+    }
+    setNewVariant(prev => ({ ...prev, color: newColor }))
+    setIsAddingColor(false)
+    setNewColor("")
+  }
+
+  // NEW: Handle canceling new color addition
+  const handleCancelAddColor = () => {
+    setIsAddingColor(false)
+    setNewColor("")
+  }
+
   const handleSubmit = async () => {
     try {
       setLoading(true)
@@ -300,7 +426,7 @@ export default function ProductForm({
         color: v.color,
         size: v.size,
         price: Number(v.price),
-        sale_price: Number(v.sale_price),
+        sale_price: newProduct.is_on_sale && v.sale_price ? Number(v.sale_price) : null,
         stock: Number(v.stock),
         images: [],
       })),
@@ -355,24 +481,20 @@ export default function ProductForm({
 
     // Handle variants
     for (const variant of variantList) {
+      const variantData = {
+        color: variant.color,
+        size: variant.size,
+        price: Number(variant.price),
+        sale_price: newProduct.is_on_sale && variant.sale_price ? Number(variant.sale_price) : null,
+        stock: Number(variant.stock),
+      }
+
       if (variant.id) {
         // Update existing variant
-        await updateProductVariant(variant.id, {
-          color: variant.color,
-          size: variant.size,
-          price: Number(variant.price),
-          sale_price: Number(variant.sale_price),
-          stock: Number(variant.stock),
-        })
+        await updateProductVariant(variant.id, variantData)
       } else {
         // Add new variant
-        const newVariantData = await addProductVariant(productId, {
-          color: variant.color,
-          size: variant.size,
-          price: Number(variant.price),
-          sale_price: Number(variant.sale_price),
-          stock: Number(variant.stock),
-        })
+        const newVariantData = await addProductVariant(productId, variantData)
         variant.id = newVariantData.variant.id
       }
 
@@ -380,6 +502,11 @@ export default function ProductForm({
       if (variant.images?.length > 0 && variant.id) {
         await uploadVariantImages(variant.id, variant.images)
       }
+    }
+
+    // Upload guide if there's a new one
+    if (guideFile) {
+      await handleGuideUpload(productId)
     }
 
     onProductUpdated(updatedProduct)
@@ -543,74 +670,71 @@ export default function ProductForm({
           </label>
         </div>
 
-
-        {/* PDF Guide Upload Section (always visible) */}
+        {/* PDF Guide Upload Section */}
         <div className="space-y-1">
-  <label className="block text-sm font-medium text-gray-700">
-    Product Guide (PDF)
-  </label>
+          <label className="block text-sm font-medium text-gray-700">
+            Product Guide (PDF)
+          </label>
 
-  <div className="flex items-center gap-3">
-    <input
-      type="file"
-      accept="application/pdf"
-      className="block w-full text-sm text-gray-900 file:mr-4 file:py-1 file:px-3
-                 file:rounded-md file:border-0 file:text-sm file:font-semibold
-                 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-      multiple={false}
-      onChange={(e) => {
-        const file = e.target.files?.[0] || null;
-        if (file && file.size > MAX_GUIDE_SIZE_BYTES) {
-          toast({
-            title: "File too large",
-            description: `Guide must be less than ${MAX_GUIDE_SIZE_MB} MB.`,
-            variant: "destructive"
-          });
-          e.target.value = ""; // Reset input
-          setGuideFile(null);
-          return;
-        }
-        setGuideFile(file);
-      }}
-      disabled={guideUploading}
-    />
+          <div className="flex items-center gap-3">
+            <input
+              type="file"
+              accept="application/pdf"
+              className="block w-full text-sm text-gray-900 file:mr-4 file:py-1 file:px-3
+                         file:rounded-md file:border-0 file:text-sm file:font-semibold
+                         file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+              multiple={false}
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                if (file && file.size > MAX_GUIDE_SIZE_BYTES) {
+                  toast({
+                    title: "File too large",
+                    description: `Guide must be less than ${MAX_GUIDE_SIZE_MB} MB.`,
+                    variant: "destructive"
+                  });
+                  e.target.value = ""; // Reset input
+                  setGuideFile(null);
+                  return;
+                }
+                setGuideFile(file);
+              }}
+              disabled={guideUploading}
+            />
 
-    {isEditing && productId ? (
-      <Button
-        type="button"
-        size="sm"
-        variant="default"
-        disabled={!guideFile || guideUploading}
-        onClick={() => handleGuideUpload(productId)}
-      >
-        {guideUploading ? "Uploading..." : "Upload"}
-      </Button>
-    ) : (
-      <span className="text-xs text-gray-400">
-        Guide will be uploaded after product is created
-      </span>
-    )}
-  </div>
+            {isEditing && productId ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                disabled={!guideFile || guideUploading}
+                onClick={() => handleGuideUpload(productId)}
+              >
+                {guideUploading ? "Uploading..." : "Upload"}
+              </Button>
+            ) : (
+              <span className="text-xs text-gray-400">
+                Guide will be uploaded after product is created
+              </span>
+            )}
+          </div>
 
-  {guideFile && (
-    <span className="text-xs text-gray-500">
-      Selected: <span className="font-medium">{guideFile.name}</span>
-    </span>
-  )}
+          {guideFile && (
+            <span className="text-xs text-gray-500">
+              Selected: <span className="font-medium">{guideFile.name}</span>
+            </span>
+          )}
 
-  {guideUrl && (
-    <a
-      href={guideUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-xs text-blue-500 underline"
-    >
-      View Existing Guide
-    </a>
-  )}
-</div>
-
-
+          {guideUrl && (
+            <a
+              href={guideUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-500 underline"
+            >
+              View Existing Guide
+            </a>
+          )}
+        </div>
 
         <div className="pt-4">
           <h3 className="text-lg font-medium mb-3">Variants</h3>
@@ -622,7 +746,7 @@ export default function ProductForm({
                     <div>
                       <p className="text-sm font-medium text-black">
                         {variant.size} / {variant.color} - {variant.price} Da
-                        {variant.sale_price > 0 && ` (Sale: ${variant.sale_price} Da)`} | Stock: {variant.stock}
+                        {newProduct.is_on_sale && variant.sale_price && ` (Sale: ${variant.sale_price} Da)`} | Stock: {variant.stock}
                       </p>
                       {variant.id && <p className="text-xs text-gray-500">ID: {variant.id}</p>}
                     </div>
@@ -696,7 +820,7 @@ export default function ProductForm({
                 color: "",
                 size: "",
                 price: 0,
-                sale_price: 0,
+                sale_price: null,
                 stock: 0,
                 images: [],
                 existingImages: [],
@@ -709,9 +833,6 @@ export default function ProductForm({
             Add Variant
           </Button>
         </div>
-
-
-
       </div>
 
       <DialogFooter className="pt-4 border-t">
@@ -816,12 +937,20 @@ export default function ProductForm({
               </div>
 
               <div className="flex flex-col">
-                <label className="text-sm font-medium text-muted-foreground mb-1">Sale Price</label>
+                <label className="text-sm font-medium text-muted-foreground mb-1">
+                  Sale Price
+                  {!newProduct.is_on_sale && <span className="text-xs text-gray-500 ml-1">(disabled)</span>}
+                </label>
                 <Input
                   type="number"
-                  value={newVariant.sale_price}
-                  onChange={(e) => setNewVariant({ ...newVariant, sale_price: Number(e.target.value) })}
+                  value={newVariant.sale_price || ""}
+                  onChange={(e) => setNewVariant({ 
+                    ...newVariant, 
+                    sale_price: e.target.value ? Number(e.target.value) : null 
+                  })}
                   className="w-full"
+                  disabled={!newProduct.is_on_sale}
+                  placeholder={!newProduct.is_on_sale ? "Product not on sale" : "Sale price"}
                 />
               </div>
 
