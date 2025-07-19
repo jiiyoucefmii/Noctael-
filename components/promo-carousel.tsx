@@ -16,15 +16,30 @@ export default function PromoCarousel() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Fetch both sale and new products
         const [saleProducts, newProducts] = await Promise.all([
           getSaleProducts(),
-          getNewProducts()
+          getNewProducts(),
         ])
-        
-        // Combine and shuffle the products
-        const combinedProducts = [...saleProducts, ...newProducts]
-        setProducts(combinedProducts)
+
+        // Build a map to merge new & sale info
+        const productMap = new Map<string, Product>()
+
+        // Add sale products
+        for (const p of saleProducts) {
+          productMap.set(p.id, { ...p, is_on_sale: true })
+        }
+
+        // Merge new products
+        for (const p of newProducts) {
+          const existing = productMap.get(p.id)
+          if (existing) {
+            productMap.set(p.id, { ...existing, is_new: true })
+          } else {
+            productMap.set(p.id, { ...p, is_new: true })
+          }
+        }
+
+        setProducts(Array.from(productMap.values()))
       } catch (error) {
         console.error("Error fetching products:", error)
       } finally {
@@ -35,8 +50,8 @@ export default function PromoCarousel() {
     fetchProducts()
   }, [])
 
-  const next = () => setCurrent((current + 1) % products.length)
-  const prev = () => setCurrent((current - 1 + products.length) % products.length)
+  const next = () => setCurrent((prev) => (prev + 1) % products.length)
+  const prev = () => setCurrent((prev) => (prev - 1 + products.length) % products.length)
 
   useEffect(() => {
     if (products.length > 0) {
@@ -45,18 +60,26 @@ export default function PromoCarousel() {
     }
   }, [current, products])
 
-  if (loading) return <div className="aspect-[21/9] w-full bg-gray-200 animate-pulse rounded-lg" />
+  if (loading) {
+    return <div className="aspect-[21/9] w-full bg-gray-200 animate-pulse rounded-lg" />
+  }
 
   if (products.length === 0) return null
 
-  // Helper function to construct image URL
   const getImageUrl = (path: string) => {
-    if (!path) return "/placeholder.svg";
-    // If path is already a full URL, return as-is
-    if (path.startsWith('http')) return path;
-    // Prepend API URL to paths starting with /
-    return `${process.env.NEXT_PUBLIC_API_URL || ''}${path}`;
-  };
+    if (!path) return "/placeholder.svg"
+    if (path.startsWith("http")) return path
+    return `${process.env.NEXT_PUBLIC_API_URL || ""}${path}`
+  }
+
+  const getPromoLabel = (product: Product) => {
+    const isNew = (product as any).is_new
+    const isSale = product.is_on_sale
+    if (isNew && isSale) return "New Arrival & On Sale"
+    if (isNew) return "New Arrival"
+    if (isSale) return "Special Sale Price"
+    return ""
+  }
 
   return (
     <div className="relative overflow-hidden rounded-lg">
@@ -67,19 +90,17 @@ export default function PromoCarousel() {
         {products.map((product) => (
           <div key={product.id} className="relative min-w-full">
             <div className="aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] w-full">
-              <Image 
-                src={getImageUrl(product.main_image)} 
-                alt={product.name} 
-                fill 
-                className="object-cover" 
+              <Image
+                src={getImageUrl(product.main_image)}
+                alt={product.name}
+                fill
+                className="object-cover"
               />
             </div>
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 p-6 text-center text-white">
               <div>
                 <h3 className="text-3xl font-bold">{product.name}</h3>
-                <p className="mt-2 text-lg">
-                  {product.is_on_sale ? "Special Sale Price" : "New Arrival"}
-                </p>
+                <p className="mt-2 text-lg">{getPromoLabel(product)}</p>
                 <Button asChild className="mt-4 bg-white text-black hover:bg-gray-200">
                   <Link href={`/products/${product.id}`}>View Product</Link>
                 </Button>
@@ -88,7 +109,7 @@ export default function PromoCarousel() {
           </div>
         ))}
       </div>
-      
+
       {products.length > 1 && (
         <>
           <Button
@@ -113,7 +134,10 @@ export default function PromoCarousel() {
             {products.map((_, i) => (
               <button
                 key={i}
-                className={cn("h-2 w-2 rounded-full bg-white/50 transition-all", current === i && "w-4 bg-white")}
+                className={cn(
+                  "h-2 w-2 rounded-full bg-white/50 transition-all",
+                  current === i && "w-4 bg-white"
+                )}
                 onClick={() => setCurrent(i)}
               >
                 <span className="sr-only">Go to slide {i + 1}</span>
