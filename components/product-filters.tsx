@@ -19,6 +19,12 @@ const genders = [
   { id: "unisex", name: "Unisex" },
 ]
 
+const specialFilters = [
+  { id: "new", name: "New Arrivals", param: "new" },
+  { id: "featured", name: "Featured", param: "featured" },
+  { id: "sale", name: "On Sale", param: "sale" },
+]
+
 export default function ProductFilters() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -46,6 +52,7 @@ export default function ProductFilters() {
   const currentGenders = searchParams?.getAll('gender') || []
   const currentSort = searchParams?.get('sort') || 'relevancy'
   const isNew = searchParams?.has('new')
+  const isFeatured = searchParams?.has('featured')
   const isOnSale = searchParams?.has('sale')
 
   const updateParams = (newParams: Record<string, string | string[]>) => {
@@ -58,7 +65,7 @@ export default function ProductFilters() {
       params.delete(key)
       if (Array.isArray(value)) {
         value.forEach(v => params.append(key, v))
-      } else {
+      } else if (value) {
         params.set(key, value)
       }
     })
@@ -80,18 +87,18 @@ export default function ProductFilters() {
     }
   }
 
-  const toggleSpecialFilter = (name: string) => {
-    if (searchParams?.has(name)) {
-      const params = new URLSearchParams(searchParams.toString())
-      params.delete(name)
-      params.delete('page')
-      router.push(`/products?${params.toString()}`, { scroll: false })
+  const toggleSpecialFilter = (param: string) => {
+    const params = new URLSearchParams(searchParams?.toString())
+    
+    if (params.has(param)) {
+      params.delete(param)
     } else {
-      const params = new URLSearchParams(searchParams?.toString())
-      params.set(name, 'true')
-      params.delete('page')
-      router.push(`/products?${params.toString()}`, { scroll: false })
+      params.set(param, 'true')
     }
+    
+    // Reset to first page when filters change
+    params.delete('page')
+    router.push(`/products?${params.toString()}`, { scroll: false })
   }
 
   const handleSortChange = (value: string) => {
@@ -121,7 +128,7 @@ export default function ProductFilters() {
         </Button>
       </div>
 
-      <Accordion type="multiple" defaultValue={["sort"]} className="space-y-4">
+      <Accordion type="multiple" defaultValue={["sort", "special"]} className="space-y-4">
         <AccordionItem value="sort" className="border-0">
           <AccordionTrigger className="py-2 hover:no-underline">
             <h3 className="font-medium text-foreground">SORT BY</h3>
@@ -145,6 +152,31 @@ export default function ProductFilters() {
                 <Label htmlFor="newest" className="text-sm font-normal cursor-pointer">Newest</Label>
               </div>
             </RadioGroup>
+          </AccordionContent>
+        </AccordionItem>
+
+        <hr className="border-border" />
+
+        {/* New Special Filters Section */}
+        <AccordionItem value="special" className="border-0">
+          <AccordionTrigger className="py-2 hover:no-underline">
+            <h3 className="font-medium text-foreground">SPECIAL OFFERS</h3>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-3 pt-2">
+              {specialFilters.map((filter) => (
+                <div key={filter.id} className="flex items-center space-x-3">
+                  <Checkbox
+                    id={`filter-${filter.id}`}
+                    checked={searchParams?.has(filter.param)}
+                    onCheckedChange={() => toggleSpecialFilter(filter.param)}
+                  />
+                  <Label htmlFor={`filter-${filter.id}`} className="text-sm font-normal cursor-pointer">
+                    {filter.name}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </AccordionContent>
         </AccordionItem>
 
