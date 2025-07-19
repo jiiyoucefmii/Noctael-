@@ -40,14 +40,14 @@ export default function HeroSection() {
       
       {/* Content */}
       <div className="relative flex h-full flex-col items-center justify-center px-4 text-center z-30">
-        <div className="max-w-4xl mx-auto mb-2"> {/* Reduced mb-4 to mb-2 */}
+        <div className="max-w-4xl mx-auto mb-0"> 
           {/* Static heading replacing the animated text */}
-          <div className="mb-0 mt-12"> {/* Reduced mb-2 to mb-0 */}
-            <h1 className="h-24 sm:h-32 md:h-36 text-white font-bold tracking-tight text-6xl sm:text-7xl md:text-8xl"> {/* Reduced height */}
+          <div className="mb-0 mt-0"> 
+            <h1 className="h-20 sm:h-24 md:h-36 text-white font-bold tracking-tight text-6xl sm:text-7xl md:text-8xl"> {/* Increased height and text size on mobile */}
               NOCTAEL
             </h1>
           </div>
-          <p className="mb-4 max-w-md mx-auto text-sm sm:text-base md:text-lg text-gray-200"> {/* Reduced mb-6 to mb-4 */}
+          <p className="mb-2 max-w-md mx-auto text-xs sm:text-base md:text-lg text-gray-200"> 
             Embrace the darkness with our premium clothing collection designed for the night dwellers.
           </p>
         </div>

@@ -66,7 +66,7 @@ export default function PromoCarousel() {
       >
         {products.map((product) => (
           <div key={product.id} className="relative min-w-full">
-            <div className="aspect-[21/9] w-full">
+            <div className="aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] w-full">
               <Image 
                 src={getImageUrl(product.main_image)} 
                 alt={product.name} 
