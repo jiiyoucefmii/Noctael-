@@ -8,7 +8,7 @@ import { Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-
+import { createWaitlistEntry } from "@/utils/api/waitlist" 
 
 export default function Newsletter() {
   const [phoneNumber, setPhoneNumber] = useState("")
@@ -20,9 +20,8 @@ export default function Newsletter() {
     setIsLoading(true)
 
     try {
-      // Call the API function
-    
-      
+      await createWaitlistEntry(phoneNumber)
+
       toast({
         title: "Success!",
         description: "You've been added to our waitlist.",

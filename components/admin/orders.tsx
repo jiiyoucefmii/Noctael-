@@ -89,6 +89,8 @@ export default function AdminOrders() {
     const fetchOrders = async () => {
       try {
         const fetchedOrders = await getAllOrders()
+        console.log("fetchedOrders")
+        console.log(fetchedOrders)
         const enriched = await Promise.all(
           fetchedOrders.orders.map(async (order: any) => {
             try {
@@ -115,6 +117,8 @@ export default function AdminOrders() {
             }
           })
         )
+        console.log("enriched")
+        console.log(enriched)
         setOrders(enriched)
       } catch {
         toast({
@@ -149,6 +153,8 @@ export default function AdminOrders() {
   }
 
   const handleViewDetails = (order: Order) => {
+    console.log("selectedOrder")
+    console.log(selectedOrder)
     setSelectedOrder(order)
     setIsDialogOpen(true)
   }

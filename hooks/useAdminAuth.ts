@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
+import { API_URL } from "@/utils/api/config"
 
 interface Admin {
   id: string
@@ -19,7 +20,7 @@ export function useAdminAuth() {
     const fetchAdmin = async () => {
       try {
         const res = await axios.get<{ admin: Admin }>(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL || "https://noctael.onrender.com"}/admin/me`,
+          `${API_URL}/admin/me`,
           { withCredentials: true }
         )
 
