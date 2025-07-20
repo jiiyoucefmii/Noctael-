@@ -43,6 +43,7 @@ export interface Order {
   total: number;
   created_at: string;
   updated_at: string;
+  shipping_type: string 
   items: OrderItem[];
   shipping_address: Address;
   user?: {

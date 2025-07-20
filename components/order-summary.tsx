@@ -18,6 +18,8 @@ export default function OrderSummary() {
     total
   } = useCart()
 
+  console.log(items)
+
   const [localLoading, setLocalLoading] = useState(true)
 
   useEffect(() => {
@@ -64,7 +66,6 @@ export default function OrderSummary() {
 
   const originalTotal = subtotal + (shipping ?? 0)
 
-  // For the main order summary card
   return (
     <Card className="border-0 bg-[#171717]">
       <CardHeader>
@@ -72,26 +73,36 @@ export default function OrderSummary() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="max-h-80 overflow-auto">
-          {items.map((item) => (
-            <div key={`${item.id}-${item.size}`} className="flex items-center py-2">
-              <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
-                <Image
-                  src={getImageUrl(item.image)}
-                  alt={item.name}
-                  fill
-                  className="object-cover"
-                  sizes="64px"
-                />
+          {items.map((item) => {
+            const price = item.item_total
+            const itemTotal = price * item.quantity
+
+            return (
+              <div key={`${item.id}-${item.size}`} className="flex items-center py-2">
+                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md">
+                  <Image
+                    src={getImageUrl(item.image)}
+                    alt={item.name}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </div>
+                <div className="ml-4 flex-1">
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {item.size && `Size: ${item.size} · `}Qty: {item.quantity}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">{itemTotal.toFixed(0)} Da</p>
+                  {item.is_on_sale && item.sale_price && (
+                    <p className="text-sm text-gray-500 line-through">{(item.price * item.quantity).toFixed(0)} Da</p>
+                  )}
+                </div>
               </div>
-              <div className="ml-4 flex-1">
-                <p className="font-medium">{item.name}</p>
-                <p className="text-sm text-gray-500">
-                  {item.size && `Size: ${item.size} · `}Qty: {item.quantity}
-                </p>
-              </div>
-              <p className="font-medium">{((item.sale_price && item.sale_price > 0 ? item.sale_price : item.price) * item.quantity).toFixed(0)} Da</p>
-            </div>
-          ))}
+            )
+          })}
         </div>
         <Separator />
         <div className="space-y-2">

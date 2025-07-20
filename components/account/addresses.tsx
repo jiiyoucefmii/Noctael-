@@ -161,29 +161,43 @@ export default function AccountAddresses() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              {/* Removed country field */}
-              
-              <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <select
-                  id="state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">Select a state</option>
-                  {uniqueStates.map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input id="address" value={formData.address} onChange={handleInputChange} />
-              </div>
+            <div className="space-y-2">
+  <Label htmlFor="name">Full Name</Label>
+  <Input id="name" value={formData.name} onChange={handleInputChange} />
+</div>
+<div className="space-y-2">
+  <Label htmlFor="country">Country</Label>
+  <Input id="country" value="Algeria" disabled />
+</div>
+
+<div className="space-y-2">
+  <Label htmlFor="state">State</Label>
+  <select
+    id="state"
+    value={formData.state}
+    onChange={handleInputChange}
+    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+  >
+    <option value="">Select a state</option>
+    {uniqueStates.map((state) => (
+      <option key={state} value={state}>
+        {state}
+      </option>
+    ))}
+  </select>
+</div>
+
+<div className="space-y-2">
+  <Label htmlFor="city">City</Label>
+  <Input id="city" value={formData.city} onChange={handleInputChange} />
+</div>
+
+<div className="space-y-2">
+  <Label htmlFor="address">Address</Label>
+  <Input id="address" value={formData.address} onChange={handleInputChange} />
+</div>
+
             </div>
             <DialogFooter>
               <Button type="button" onClick={handleSubmit}>
