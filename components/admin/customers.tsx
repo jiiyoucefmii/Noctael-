@@ -460,6 +460,7 @@ export default function AdminCustomers() {
                                       <p>{order.first_name} {order.last_name}</p>
                                       <p>{order.shipping_address}</p>
                                       <p>{order.shipping_city}, {order.shipping_state}</p>
+                                      {/* Removed city */}
                                       <p>{order.shipping_country}</p>
                                     </div>
                                   </div>

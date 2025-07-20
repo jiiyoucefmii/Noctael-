@@ -89,7 +89,7 @@ export default function OrderSummary() {
                   {item.size && `Size: ${item.size} · `}Qty: {item.quantity}
                 </p>
               </div>
-              <p className="font-medium">{(item.price * item.quantity).toFixed(0)} Da</p>
+              <p className="font-medium">{((item.sale_price && item.sale_price > 0 ? item.sale_price : item.price) * item.quantity).toFixed(0)} Da</p>
             </div>
           ))}
         </div>

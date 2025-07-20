@@ -125,6 +125,11 @@ export default function OrderConfirmationPage() {
                     <span>-{order.discount_amount} DA</span>
                   </div>
                 )}
+                {/* Add shipping cost display */}
+                <div className="flex justify-between">
+                  <span>Delivery Cost</span>
+                  <span>{order.total - order.subtotal } DA</span>
+                </div>
                 <div className="flex justify-between font-medium mt-2">
                   <span>Total</span>
                   <span>{order.total} DA</span>
@@ -139,8 +144,8 @@ export default function OrderConfirmationPage() {
               <br />
               {order.shipping_address}
               <br />
-              {order.shipping_city}, {order.shipping_state} 
-              {/* Removed country line */}
+              {order.shipping_state} 
+              {/* Removed city */}
             </p>
           </div>
 

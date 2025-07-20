@@ -33,13 +33,12 @@ export default function AccountAddresses() {
   const [userAddresses, setUserAddresses] = useState<Address[]>([])
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
   const [loading, setLoading] = useState(true)
-  const [formData, setFormData] = useState<Omit<Address, 'user_id' | 'created_at' | 'updated_at'>>({  
-    id: undefined,
+  const [formData, setFormData] = useState<Address>({
     name: "",
     address: "",
-    city: "",
+    // city: "", - Removed city field
     state: "",
-    // Removed country field
+    country: "",
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { toast } = useToast()
@@ -182,11 +181,6 @@ export default function AccountAddresses() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input id="city" value={formData.city} onChange={handleInputChange} />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="address">Address</Label>
                 <Input id="address" value={formData.address} onChange={handleInputChange} />
               </div>
@@ -232,8 +226,8 @@ export default function AccountAddresses() {
                 </div>
                 <div className="mt-2 text-sm text-gray-500">
                   <p>{address.address}</p>
-                  <p>{address.city}, {address.state}</p>
-                  {/* Removed country display */}
+                  <p>{address.state}</p>
+                  {/* Removed city display */}
                 </div>
                 {!address.is_default && (
                   <Button variant="outline" size="sm" className="mt-4" onClick={() => handleSetDefault(address.id!)}>

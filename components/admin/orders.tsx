@@ -446,7 +446,7 @@ export default function AdminOrders() {
                   <h3 className="font-medium mb-2">Shipping Information</h3>
                   <div className="space-y-1 text-sm">
                     <p><span className="text-muted-foreground">Address:</span> {selectedOrder.shipping_address}</p>
-                    <p><span className="text-muted-foreground">City:</span> {selectedOrder.shipping_city}</p>
+                    {/* Removed city field */}
                     <p><span className="text-muted-foreground">State:</span> {selectedOrder.shipping_state}</p>
                     <p><span className="text-muted-foreground">Country:</span> {selectedOrder.shipping_country}</p>
                   </div>

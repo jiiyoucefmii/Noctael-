@@ -154,7 +154,8 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                 <p className="font-medium">{order.first_name} {order.last_name}</p>
                 <p className="text-muted-foreground">{order.shipping_address}</p>
                 <p className="text-muted-foreground">
-                  {order.shipping_city}, {order.shipping_state}
+                  {order.shipping_state}
+                  {/* Removed city */}
                 </p>
                 {/* Removed country line */}
               </CardContent>

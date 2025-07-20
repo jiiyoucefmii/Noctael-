@@ -46,7 +46,7 @@ export default function CheckoutForm() {
     email: "",
     phone: "",
     address: "",
-    city: "",
+    // city: "", - Removed city field
     state: "",
     // Removed country field
   })
@@ -132,7 +132,7 @@ export default function CheckoutForm() {
       setFormData((prev) => ({
         ...prev,
         address: found.address,
-        city: found.city,
+        // city: found.city, - Removed city field
         state: found.state,
       }))
       
@@ -143,20 +143,26 @@ export default function CheckoutForm() {
   }
 
   const findExistingAddress = (): string | null => {
-    const { address, city, state } = formData
+    const { address, state } = formData
     const match = addresses.find(
-      (a) => a.address === address && a.city === city && a.state === state
+      (a) => a.address === address && a.state === state
+      // We're no longer checking for city match
     )
     return match ? match.id : null
   }
 
   const handleInformationUpdate = async () => {
     try {
+      // Create updatedInfo object without email initially
       const updatedInfo = {
         first_name: formData.firstName,
         last_name: formData.lastName,
-        email: formData.email,
         phone_number: formData.phone,
+      }
+      
+      // Only add email if it's provided
+      if (formData.email.trim()) {
+        updatedInfo.email = formData.email
       }
 
       const updatedUser = await updateUserProfile(updatedInfo)
@@ -207,9 +213,9 @@ export default function CheckoutForm() {
         const payload = {
           name: `${formData.firstName} ${formData.lastName}`,
           address: formData.address,
-          city: formData.city,
+          city: "N/A", // Add default value
           state: formData.state,
-          // Removed country field from payload
+          country: "N/A", // Add default value
           is_default: false,
         }
         const { address } = await createAddress(payload)
@@ -220,7 +226,7 @@ export default function CheckoutForm() {
       const hasChanges = [
         formData.firstName !== userInfo.first_name,
         formData.lastName !== userInfo.last_name,
-        formData.email !== userInfo.email,
+        formData.email.trim() ? formData.email !== userInfo.email : false,
         formData.phone !== userInfo.phone_number,
       ].some(Boolean)
 
@@ -245,6 +251,15 @@ export default function CheckoutForm() {
       console.log("orderData")
       console.log(orderData)
       const { order } = await createOrder(orderData)
+      
+      // Clear the cart after successful order placement
+      try {
+        await clearCart()
+      } catch (clearCartError) {
+        console.error("Failed to clear cart:", clearCartError)
+        // Don't let cart clearing failure prevent order confirmation
+      }
+      
       toast({ title: "Order placed", description: `Order #${order.id} was created.` })
       router.push(`/order-confirmation?orderId=${order.id}`)
     } catch (err: any) {
@@ -273,8 +288,8 @@ export default function CheckoutForm() {
             <Input id="lastName" value={formData.lastName} onChange={handleInputChange} required disabled={isLoading} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" value={formData.email} onChange={handleInputChange} required disabled={isLoading} />
+            <Label htmlFor="email">Email (Optional)</Label>
+            <Input id="email" value={formData.email} onChange={handleInputChange} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">Phone</Label>
@@ -298,7 +313,7 @@ export default function CheckoutForm() {
                 <SelectContent>
                   {addresses.map((addr) => (
                     <SelectItem key={addr.id} value={addr.id || ""}>
-                      {addr.name} - {addr.address}, {addr.city}
+                      {addr.name} - {addr.address}, {addr.state}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -311,10 +326,7 @@ export default function CheckoutForm() {
               <Label htmlFor="address">Address</Label>
               <Input id="address" value={formData.address} onChange={handleInputChange} required />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input id="city" value={formData.city} onChange={handleInputChange} required />
-            </div>
+            {/* Removed city field */}
             <div className="space-y-2">
               <Label htmlFor="state">State</Label>
               <Select value={formData.state} onValueChange={handleStateChange}>
