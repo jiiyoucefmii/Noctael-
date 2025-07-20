@@ -46,9 +46,9 @@ export default function CheckoutForm() {
     email: "",
     phone: "",
     address: "",
-    city: "",
     state: "",
     country: "Algeria",
+    shippingType: "to_home" as 'to_home' | 'to_desk'
   })
 
   const router = useRouter()
@@ -62,7 +62,6 @@ export default function CheckoutForm() {
     shipping,
     setShippingState,
     setShippingType,
-    shippingType,
     clearCart,
     isLoading: isCartLoading,
   } = useCart()
@@ -81,11 +80,21 @@ export default function CheckoutForm() {
         router.push("/login")
         return
       }
+      
       setUser(userData)
       setUserInfo(userData)
+      
+      // Prefill user information with empty strings if guest user
+      const firstName = userData.first_name === 'Guest' ? '' : userData.first_name || ''
+      const lastName = userData.last_name === 'User' ? '' : userData.last_name || ''
+      const email = userData.email?.startsWith('guest') ? '' : userData.email || ''
+
       setFormData((prev) => ({
         ...prev,
-        email: userData.email || "",
+        firstName,
+        lastName,
+        email,
+        phone: userData.phone_number || ""
       }))
 
       const res = await getUserAddresses()
@@ -96,7 +105,7 @@ export default function CheckoutForm() {
         setSelectedAddressId(defaultAddr.id)
         setFormData((prev) => ({
           ...prev,
-          city: defaultAddr.city || "",
+          address: defaultAddr.address || "",
           state: defaultAddr.state || "",
         }))
         
@@ -125,6 +134,11 @@ export default function CheckoutForm() {
     await setShippingState(value)
   }, [setShippingState])
 
+  const handleShippingTypeChange = (value: 'to_home' | 'to_desk') => {
+    setShippingType(value)
+    setFormData(prev => ({ ...prev, shippingType: value }))
+  }
+
   const handleAddressChange = (id: string) => {
     setSelectedAddressId(id)
     const found = addresses.find((a) => a.id === id)
@@ -132,7 +146,6 @@ export default function CheckoutForm() {
       setFormData((prev) => ({
         ...prev,
         address: found.address,
-        city: found.city,
         state: found.state,
       }))
       
@@ -143,9 +156,9 @@ export default function CheckoutForm() {
   }
 
   const findExistingAddress = (): string | null => {
-    const { address, city, state } = formData
+    const { address, state } = formData
     const match = addresses.find(
-      (a) => a.address === address && a.city === city && a.state === state
+      (a) => a.address === address && a.state === state
     )
     return match ? match.id : null
   }
@@ -155,7 +168,7 @@ export default function CheckoutForm() {
       const updatedInfo = {
         first_name: formData.firstName,
         last_name: formData.lastName,
-        email: formData.email,
+        email: formData.email || "Not provided",
         phone_number: formData.phone,
       }
 
@@ -190,16 +203,6 @@ export default function CheckoutForm() {
       return
     }
 
-    if (
-      formData.firstName === userInfo?.first_name ||
-      formData.lastName === userInfo?.last_name ||
-      formData.phone === userInfo?.phone_number ||
-      formData.address === ""
-    ) {
-      toast({ title: "Update required", description: "Please update your name, phone, and address before proceeding.", variant: "destructive" })
-      return
-    }
-
     setIsLoading(true)
     try {
       let addressId = selectedAddressId || findExistingAddress()
@@ -207,7 +210,7 @@ export default function CheckoutForm() {
         const payload = {
           name: `${formData.firstName} ${formData.lastName}`,
           address: formData.address,
-          city: formData.city,
+          city: formData.state, // Using state as city
           state: formData.state,
           country: formData.country,
           is_default: false,
@@ -241,9 +244,8 @@ export default function CheckoutForm() {
         subtotal,
         shipping_cost: shipping,
         total,
+        shipping_type: formData.shippingType
       }
-      console.log("orderData")
-      console.log(orderData)
       const { order } = await createOrder(orderData)
       toast({ title: "Order placed", description: `Order #${order.id} was created.` })
       router.push(`/order-confirmation?orderId=${order.id}`)
@@ -266,19 +268,43 @@ export default function CheckoutForm() {
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="firstName">First Name</Label>
-            <Input id="firstName" value={formData.firstName} onChange={handleInputChange} required disabled={isLoading} />
+            <Input 
+              id="firstName" 
+              value={formData.firstName} 
+              onChange={handleInputChange} 
+              required 
+              disabled={isLoading} 
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="lastName">Last Name</Label>
-            <Input id="lastName" value={formData.lastName} onChange={handleInputChange} required disabled={isLoading} />
+            <Input 
+              id="lastName" 
+              value={formData.lastName} 
+              onChange={handleInputChange} 
+              required 
+              disabled={isLoading} 
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" value={formData.email} onChange={handleInputChange} required disabled={isLoading} />
+            <Input 
+              id="email" 
+              value={formData.email} 
+              onChange={handleInputChange} 
+              placeholder="Enter your email (Optional)"
+              disabled={isLoading} 
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" value={formData.phone} onChange={handleInputChange} required disabled={isLoading} />
+            <Input 
+              id="phone" 
+              value={formData.phone} 
+              onChange={handleInputChange} 
+              required 
+              disabled={isLoading} 
+            />
           </div>
         </CardContent>
       </Card>
@@ -298,7 +324,7 @@ export default function CheckoutForm() {
                 <SelectContent>
                   {addresses.map((addr) => (
                     <SelectItem key={addr.id} value={addr.id || ""}>
-                      {addr.name} - {addr.address}, {addr.city}
+                      {addr.name} - {addr.address}, {addr.state}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -306,18 +332,22 @@ export default function CheckoutForm() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
-              <Input id="address" value={formData.address} onChange={handleInputChange} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input id="city" value={formData.city} onChange={handleInputChange} required />
+              <Input 
+                id="address" 
+                value={formData.address} 
+                onChange={handleInputChange} 
+                required 
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="state">State</Label>
-              <Select value={formData.state} onValueChange={handleStateChange}>
+              <Select 
+                value={formData.state} 
+                onValueChange={handleStateChange}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
@@ -329,12 +359,11 @@ export default function CheckoutForm() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <Input id="country" value={formData.country} disabled />
-            </div>
-            <div className="space-y-2">
               <Label>Shipping Type</Label>
-              <Select value={shippingType} onValueChange={(value: 'to_home' | 'to_desk') => setShippingType(value)}>
+              <Select 
+                value={formData.shippingType} 
+                onValueChange={handleShippingTypeChange}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select shipping type" />
                 </SelectTrigger>

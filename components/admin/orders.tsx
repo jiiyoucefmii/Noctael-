@@ -59,6 +59,7 @@ interface Order {
   shipping_state: string
   shipping_country: string
   items: OrderItem[]
+  shipping_type: string
   first_name: string
   last_name: string
   subtotal: string
@@ -434,24 +435,27 @@ export default function AdminOrders() {
             <>
               {/* Customer + Shipping Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <h3 className="font-medium mb-2">Customer Information</h3>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">Name:</span> {selectedOrder.user_name}</p>
-                    <p><span className="text-muted-foreground">Email:</span> {selectedOrder.user_email}</p>
-                    <p><span className="text-muted-foreground">Phone:</span> {selectedOrder.user.phone_number}</p>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-2">Shipping Information</h3>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">Address:</span> {selectedOrder.shipping_address}</p>
-                    <p><span className="text-muted-foreground">City:</span> {selectedOrder.shipping_city}</p>
-                    <p><span className="text-muted-foreground">State:</span> {selectedOrder.shipping_state}</p>
-                    <p><span className="text-muted-foreground">Country:</span> {selectedOrder.shipping_country}</p>
-                  </div>
-                </div>
-              </div>
+  <div>
+    <h3 className="font-medium mb-2">Customer Information</h3>
+    <div className="space-y-1 text-sm">
+      <p><span className="text-muted-foreground">Name:</span> {selectedOrder.user_name}</p>
+      <p><span className="text-muted-foreground">Email:</span> {selectedOrder.user_email}</p>
+      <p><span className="text-muted-foreground">Phone:</span> {selectedOrder.user.phone_number}</p>
+    </div>
+  </div>
+  <div>
+    <h3 className="font-medium mb-2">Shipping Information</h3>
+    <div className="space-y-1 text-sm">
+      <p><span className="text-muted-foreground">Address:</span> {selectedOrder.shipping_address}</p>
+      <p><span className="text-muted-foreground">City:</span> {selectedOrder.shipping_city}</p>
+      <p><span className="text-muted-foreground">State:</span> {selectedOrder.shipping_state}</p>
+      <p><span className="text-muted-foreground">Country:</span> {selectedOrder.shipping_country}</p>
+      <p><span className="text-muted-foreground">Shipping Type:</span> 
+        {selectedOrder.shipping_type === 'to_desk' ? ' To Desk' : ' To Home'}
+      </p>
+    </div>
+  </div>
+</div>
 
               {/* Order Items */}
               <div className="mb-6">
