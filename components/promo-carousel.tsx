@@ -21,15 +21,12 @@ export default function PromoCarousel() {
           getNewProducts(),
         ])
 
-        // Build a map to merge new & sale info
         const productMap = new Map<string, Product>()
 
-        // Add sale products
         for (const p of saleProducts) {
           productMap.set(p.id, { ...p, is_on_sale: true })
         }
 
-        // Merge new products
         for (const p of newProducts) {
           const existing = productMap.get(p.id)
           if (existing) {
@@ -50,8 +47,10 @@ export default function PromoCarousel() {
     fetchProducts()
   }, [])
 
-  const next = () => setCurrent((prev) => (prev + 1) % products.length)
-  const prev = () => setCurrent((prev) => (prev - 1 + products.length) % products.length)
+  const next = () =>
+    setCurrent((prev) => (products.length ? (prev + 1) % products.length : 0))
+  const prev = () =>
+    setCurrent((prev) => (products.length ? (prev - 1 + products.length) % products.length : 0))
 
   useEffect(() => {
     if (products.length > 0) {
@@ -59,12 +58,6 @@ export default function PromoCarousel() {
       return () => clearInterval(interval)
     }
   }, [current, products])
-
-  if (loading) {
-    return <div className="aspect-[21/9] w-full bg-gray-200 animate-pulse rounded-lg" />
-  }
-
-  if (products.length === 0) return null
 
   const getImageUrl = (path: string) => {
     if (!path) return "/placeholder.svg"
@@ -81,6 +74,21 @@ export default function PromoCarousel() {
     return ""
   }
 
+  if (loading) {
+    return <div className="aspect-[21/9] w-full bg-gray-200 animate-pulse rounded-lg" />
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="aspect-[21/9] w-full flex flex-col items-center justify-center rounded-lg bg-gradient-to-r from-purple-100 via-pink-100 to-yellow-100 text-center p-8">
+        <div className="text-6xl mb-4">🎁</div>
+        <h2 className="text-2xl font-semibold text-gray-700">No Specials Available</h2>
+        <p className="text-gray-600 mt-2">Check back later for new arrivals and deals!</p>
+      </div>
+    )
+  }
+  
+
   return (
     <div className="relative overflow-hidden rounded-lg">
       <div
@@ -89,7 +97,7 @@ export default function PromoCarousel() {
       >
         {products.map((product) => (
           <div key={product.id} className="relative min-w-full">
-            <div className="aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] w-full">
+            <div className="relative aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] w-full">
               <Image
                 src={getImageUrl(product.main_image)}
                 alt={product.name}

@@ -18,16 +18,16 @@ export function useAuth() {
     const fetchUser = async () => {
       try {
         const data = await getCurrentUser();
-        console.log(data)
+        const userObj = data?.user ?? data;
         if (isMounted) {
-          if (!data) {
+          if (!userObj || userObj === null) {
             setUser(null);
             setIsAuthenticated(false);
             setIsGuest(false);
           } else {
-            setUser(data.user || data);
+            setUser(userObj);
             setIsAuthenticated(true);
-            setIsGuest(data?.user?.is_guest || data?.is_guest || false);
+            setIsGuest(userObj?.is_guest || false);
           }
         }
       } catch (error) {

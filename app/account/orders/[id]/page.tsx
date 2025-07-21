@@ -1,7 +1,6 @@
 // app/account/orders/[id]/page.tsx
 
 import Link from "next/link"
-import Image from "next/image"
 import { ChevronLeft, Package } from "lucide-react"
 import { getOrderById } from "@/utils/api/orders"
 import { Badge } from "@/components/ui/badge"
@@ -36,6 +35,13 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
       default:
         return "bg-gray-500"
     }
+  }
+
+  const getImageUrl = (path: string | null) => {
+    if (!path) return "/placeholder.svg"
+    return path.startsWith("http")
+      ? path
+      : `${process.env.NEXT_PUBLIC_API_URL || ""}${path}`
   }
 
   return (
@@ -88,11 +94,10 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                 {order.items.map((item) => (
                   <div key={item.id} className="flex gap-4 py-4">
                     <div className="relative h-20 w-20 rounded-md overflow-hidden flex-shrink-0">
-                      <Image
-                        src={item.image || "/placeholder.svg"}
+                      <img
+                        src={getImageUrl(item.image)}
                         alt={item.product_name}
-                        fill
-                        className="object-cover"
+                        className="object-cover h-full w-full"
                       />
                     </div>
                     <div className="flex-1">
@@ -139,7 +144,9 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                   <span>Total</span>
                   <span>{formatPrice(order.total)}</span>
                 </div>
-                <div className="pt-2 text-xs text-muted-foreground">Payment Method: Payment on Delivery</div>
+                <div className="pt-2 text-xs text-muted-foreground">
+                  Payment Method: Payment on Delivery
+                </div>
               </CardContent>
             </Card>
 
@@ -149,7 +156,9 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                 <CardTitle>Shipping Address</CardTitle>
               </CardHeader>
               <CardContent className="text-sm space-y-1">
-                <p className="font-medium">{order.first_name} {order.last_name}</p>
+                <p className="font-medium">
+                  {order.first_name} {order.last_name}
+                </p>
                 <p className="text-muted-foreground">{order.shipping_address}</p>
                 <p className="text-muted-foreground">
                   {order.shipping_city}, {order.shipping_state}
