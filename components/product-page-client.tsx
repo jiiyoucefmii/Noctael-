@@ -26,9 +26,10 @@ export default function ProductPageClient({ product }: { product: Product }) {
   }, [selectedVariant, product.main_image])
 
   const handleAddToCart = async () => {
-    if (!selectedVariant) {
+    if (!selectedVariant || !selectedVariant.id) {
       toast({
-        title: "Please select a variant",
+        title: "Invalid product variant",
+        description: "Please select a different variant or try again later",
         variant: "destructive"
       })
       return
@@ -36,12 +37,13 @@ export default function ProductPageClient({ product }: { product: Product }) {
 
     setIsAddingToCart(true)
     try {
-      await addToCart(selectedVariant.id ?? "", quantity)
+      await addToCart(selectedVariant.id, quantity)
       toast({
         title: "Added to cart",
         description: `${product.name} (${selectedVariant.color}, ${selectedVariant.size}) has been added to your cart`
       })
     } catch (error) {
+      console.error("Cart error:", error)
       toast({
         title: "Error",
         description: "Failed to add to cart",
