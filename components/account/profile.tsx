@@ -23,6 +23,7 @@ import {
 
 export default function AccountProfile() {
   const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(true) // NEW
   const [emailChangeLoading, setEmailChangeLoading] = useState(false)
 
   const [user, setUser] = useState({
@@ -43,19 +44,23 @@ export default function AccountProfile() {
     const fetchUser = async () => {
       try {
         const userData = await getCurrentUser()
+        console.log("userData")
+        console.log(userData)
         setUser({
-          first_name: userData.first_name || "",
-          last_name: userData.last_name || "",
-          phone_number: userData.phone_number || "",
+          first_name: userData.user.first_name || "",
+          last_name: userData.user.last_name || "",
+          phone_number: userData.user.phone_number || "",
         })
-        setCurrentEmail(userData.email || "")
-        setNewEmail(userData.email || "")
+        setCurrentEmail(userData.user.email || "")
+        setNewEmail(userData.user.email || "")
       } catch (error: any) {
         toast({
           variant: "destructive",
           title: "Failed to load user data",
           description: error?.response?.data?.message || "Please try again later.",
         })
+      } finally {
+        setIsFetching(false)
       }
     }
 
@@ -71,7 +76,7 @@ export default function AccountProfile() {
         first_name: user.first_name,
         last_name: user.last_name,
         phone_number: user.phone_number,
-        email: currentEmail, // maintain current email
+        email: currentEmail,
       })
 
       if (currentPassword || newPassword || confirmPassword) {
@@ -113,7 +118,6 @@ export default function AccountProfile() {
         title: "Verification sent",
         description: "Please check your inbox to confirm the new email address.",
       })
-      setNewEmail("")
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -123,6 +127,14 @@ export default function AccountProfile() {
     } finally {
       setEmailChangeLoading(false)
     }
+  }
+
+  if (isFetching) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   return (

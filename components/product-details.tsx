@@ -1,12 +1,9 @@
 "use client"
 
-import { useState } from "react"
 import { Heart, Loader2, ShoppingBag, Truck } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { useCart } from "@/hooks/use-cart"
 import type { Product, ProductVariant } from "@/utils/api/products"
 
 interface ProductDetailsProps {
@@ -29,7 +26,6 @@ export default function ProductDetails({
   isAddingToCart
 }: ProductDetailsProps) {
   const { toast } = useToast()
-
   const availableStock = selectedVariant?.stock || 0
 
   return (
@@ -39,7 +35,9 @@ export default function ProductDetails({
         <div className="mt-2 flex items-center">
           {selectedVariant?.sale_price ? (
             <>
-              <p className="text-2xl font-semibold">{Number(selectedVariant.sale_price).toFixed(0)} Da</p>
+              <p className="text-2xl font-semibold">
+                {Number(selectedVariant.sale_price).toFixed(0)} Da
+              </p>
               <p className="ml-2 text-lg text-gray-500 line-through">
                 {Number(selectedVariant.price).toFixed(0)} Da
               </p>
@@ -70,7 +68,11 @@ export default function ProductDetails({
                   key={color}
                   variant="outline"
                   size="sm"
-                  className={`capitalize ${selectedVariant?.color === color ? 'border-2 border-primary' : ''}`}
+                  className={`capitalize ${
+                    selectedVariant?.color === color 
+                      ? 'border-2 border-primary bg-primary/10' 
+                      : ''
+                  }`}
                   onClick={() => variantForColor && onVariantChange(variantForColor)}
                   disabled={!isAvailable}
                 >
@@ -83,7 +85,7 @@ export default function ProductDetails({
         </div>
       )}
 
-      {/* Size Selector */}
+      {/* Size Selector with white fill, black text, borders, and no hover */}
       {product.sizes?.length > 1 && (
         <div>
           <label className="mb-2 block font-medium">Size</label>
@@ -94,6 +96,7 @@ export default function ProductDetails({
                 (!selectedVariant?.color || v.color === selectedVariant.color)
               )
               const isAvailable = variantForSize?.stock && variantForSize.stock > 0
+              const isSelected = selectedVariant?.size === size
 
               return (
                 <Button
@@ -101,7 +104,13 @@ export default function ProductDetails({
                   variant="outline"
                   size="sm"
                   disabled={!isAvailable}
-                  className={`${selectedVariant?.size === size ? 'border-2 border-primary' : ''} ${!isAvailable ? 'opacity-50' : ''}`}
+                  className={`
+                    ${isSelected 
+                      ? 'bg-white text-black border-primary border-2 shadow-sm' 
+                      : ''
+                    }
+                    ${!isAvailable ? 'opacity-50' : ''}
+                  `}
                   onClick={() => variantForSize && onVariantChange(variantForSize)}
                 >
                   {size}
@@ -139,9 +148,10 @@ export default function ProductDetails({
           <p className="mt-1 text-sm text-gray-500">{availableStock} available in stock</p>
         )}
       </div>
-{/* Stock Info */}
+
+      {/* Stock Info */}
       <div className="rounded-lg bg-gray-50 p-4 w-fit">
-        <div className="flex items-center text-sm text-black"> {/* Added text-black class */}
+        <div className="flex items-center text-sm text-black">
           <Truck className="mr-2 h-5 w-5 text-gray-500" />
           {selectedVariant ? (
             availableStock > 10 ? (
@@ -182,7 +192,6 @@ export default function ProductDetails({
         </Button>
       </div>
 
-      
       {/* Extra Info */}
       <div className="space-y-4 border-t pt-6">
         <div>

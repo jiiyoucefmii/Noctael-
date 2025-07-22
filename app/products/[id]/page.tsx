@@ -12,11 +12,13 @@ interface ProductPageProps {
   }
 }
 
-export async function generateMetadata(props: { params: Promise<ProductPageProps["params"]> }): Promise<Metadata> {
+export async function generateMetadata(
+  props: { params: Promise<ProductPageProps["params"]> }
+): Promise<Metadata> {
   try {
     const { params } = await props;
     const product = await getProductById((await params).id)
-    
+
     if (!product) {
       return {
         title: "Product Not Found | Noctael",
@@ -48,27 +50,31 @@ export default async function ProductPage({ params }: ProductPageProps) {
     if (!product) notFound()
 
     return (
-      <div className="container py-10">
-        {/* Breadcrumbs */}
-        <nav className="mb-6 flex items-center space-x-1 text-sm text-gray-500">
-          <Link href="/" className="flex items-center hover:text-gray-900">
-            <Home className="mr-1 h-4 w-4" />
-            Home
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <Link href="/products" className="hover:text-gray-900">Products</Link>
-          <ChevronRight className="h-4 w-4" />
-          <Link
-            href={`/products?category=${product.category_name?.toLowerCase()}`}
-            className="hover:text-gray-900"
-          >
-            {product.category_name}
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-gray-400 line-clamp-1">{product.name}</span>
-        </nav>
+      <div className="bg-muted min-h-screen py-10">
+        <div className="container space-y-8">
+          {/* Breadcrumbs */}
+          <nav className="flex items-center text-sm text-muted-foreground space-x-1">
+            <Link href="/" className="flex items-center hover:text-foreground transition-colors">
+              <Home className="mr-1 h-4 w-4" />
+              Home
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <Link href="/products" className="hover:text-foreground transition-colors">
+              Products
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <Link
+              href={`/products?category=${product.category_name?.toLowerCase()}`}
+              className="hover:text-foreground transition-colors"
+            >
+              {product.category_name}
+            </Link>
+            <ChevronRight className="h-4 w-4" />
+            <span className="text-foreground font-medium truncate max-w-[200px]">{product.name}</span>
+          </nav>
 
-        <ProductPageClient product={product} />
+          <ProductPageClient product={product} />
+        </div>
       </div>
     )
   } catch (error) {

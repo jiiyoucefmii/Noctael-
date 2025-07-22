@@ -40,6 +40,7 @@ export default function Products() {
           getCategories(),
         ])
         setProductList(productsData || [])
+        console.log(productsData)
         setCategories(categoriesData.categories || [])
       } catch {
         toast({
