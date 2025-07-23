@@ -12,14 +12,15 @@ import {
   CardTitle
 } from "@/components/ui/card"
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { getOrderById, Order } from "@/utils/api/orders"
 import { getShippingOptionsByState, ShippingOption } from "@/utils/api/shippingOptions"
 import { useToast } from "@/hooks/use-toast"
 
 export default function OrderConfirmationPage() {
   const searchParams = useSearchParams()
-  const orderId = searchParams?.get("orderId")
+  const params = useParams()
+  const orderId = params?.id as string
   const { toast } = useToast()
 
   const [order, setOrder] = useState<Order | null>(null)
