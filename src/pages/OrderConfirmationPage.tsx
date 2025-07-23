@@ -20,7 +20,6 @@ export default function OrderConfirmationPage() {
 
   useEffect(() => {
     if (!orderId) return
-    setOrder("order.shipping_state")
 
     const fetchOrder = async () => {
       try {
