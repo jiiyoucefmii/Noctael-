@@ -3,8 +3,10 @@
 import Link from "next/link"
 import { ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import CartItems from "@/components/cart-items"
-import CartSummary from "@/components/cart-summary"
+import dynamic from "next/dynamic"
+const CartItems = dynamic(() => import("@/components/cart-items"), { ssr: false })
+const CartSummary = dynamic(() => import("@/components/cart-summary"), { ssr: false })
+
 
 export default function CartPage() {
   return (

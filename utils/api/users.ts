@@ -43,7 +43,7 @@ export interface UpdatePasswordData {
 
 // Auth APIs
 export async function loginUser(credentials: LoginCredentials) {
-  const res = await axios.post(`${API_URL}/auth/login`, credentials, { withCredentials: true });
+  const res = await axios.post(`${API_URL}/auth/login`, credentials, { withCredentials: 'include' });
   return res.data;
 }
 

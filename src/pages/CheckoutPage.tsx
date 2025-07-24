@@ -1,5 +1,7 @@
-import CheckoutForm from "../../components/checkout-form"
-import OrderSummary from "../../components/order-summary"
+import dynamic from "next/dynamic"
+
+const CheckoutForm = dynamic(() => import("../../components/checkout-form"), { ssr: false })
+const OrderSummary = dynamic(() => import("../../components/order-summary"), { ssr: false })
 
 
 export default function CheckoutPage() {
