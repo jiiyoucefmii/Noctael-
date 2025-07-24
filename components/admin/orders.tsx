@@ -173,7 +173,6 @@ export default function AdminOrders() {
       
       if (!signal.aborted) {
         setBackgroundFetchComplete(true)
-        console.log('Background fetch completed successfully')
       }
     } catch (error) {
       if (!signal.aborted) {

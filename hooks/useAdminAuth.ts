@@ -24,7 +24,6 @@ export function useAdminAuth() {
           { withCredentials: true }
         )
 
-        console.log("Admin data fetched:", res.data)
 
         if (isMounted && res.data?.admin) {
           setAdmin(res.data.admin)

@@ -55,7 +55,7 @@ export default function ProductDetails({
       <p className="text-gray-600">{product.description}</p>
 
       {/* Color Selector */}
-      {product.colors?.length > 1 && (
+      {product.colors?.length > 0 && (
         <div>
           <label className="mb-2 block font-medium">Color</label>
           <div className="flex gap-2">
@@ -86,7 +86,7 @@ export default function ProductDetails({
       )}
 
       {/* Size Selector with white fill, black text, borders, and no hover */}
-      {product.sizes?.length > 1 && (
+      {product.sizes?.length > 0 && (
         <div>
           <label className="mb-2 block font-medium">Size</label>
           <div className="flex flex-wrap gap-2">

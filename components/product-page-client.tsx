@@ -21,7 +21,6 @@ export default function ProductPageClient({ product }: { product: Product }) {
   // When variant changes, update selected image
   useEffect(() => {
     const newImage = selectedVariant?.images?.[0]?.image_url || product.main_image || "/placeholder.svg"
-    console.log(selectedVariant)
     setSelectedImage(newImage)
   }, [selectedVariant, product.main_image])
 

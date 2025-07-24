@@ -44,8 +44,6 @@ export default function AccountProfile() {
     const fetchUser = async () => {
       try {
         const userData = await getCurrentUser()
-        console.log("userData")
-        console.log(userData)
         setUser({
           first_name: userData.user.first_name || "",
           last_name: userData.user.last_name || "",
