@@ -1,11 +1,11 @@
 "use client"
-
-import { useEffect, useState, useCallback } from "react"
-import { Search, Phone, Calendar } from "lucide-react"
+import { deleteWaitlistEntry } from "@/utils/api/waitlist"
+import { useState, useCallback } from "react"
+import { Search, Phone, Calendar, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { getWaitlistEntries } from "@/utils/api/waitlist"
 
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -22,10 +22,27 @@ interface WaitlistEntry {
 }
 
 export default function AdminWaitlist() {
-  const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([])
   const [search, setSearch] = useState("")
-  const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+
+  // Static dummy data
+  const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([
+    {
+      id: "1",
+      phone_number: "+213555123456",
+      created_at: new Date().toISOString()
+    },
+    {
+      id: "2",
+      phone_number: "+213555234567",
+      created_at: new Date(Date.now() - 86400000).toISOString() // 1 day ago
+    },
+    {
+      id: "3",
+      phone_number: "+213555345678",
+      created_at: new Date(Date.now() - 172800000).toISOString() // 2 days ago
+    }
+  ])
 
   const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -37,34 +54,32 @@ export default function AdminWaitlist() {
     })
   }, [])
 
-  useEffect(() => {
-    const fetchWaitlist = async () => {
-      try {
-        const entries = await getWaitlistEntries()
-        const sortedEntries = entries.sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )
-        setWaitlistEntries(sortedEntries)
-      } catch (error) {
-        toast({
-          title: "Error fetching waitlist",
-          description: "Something went wrong while fetching waitlist entries.",
-          variant: "destructive"
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchWaitlist()
-  }, [toast])
+  const handleRemoveEntry = async (id: string) => {
+  try {
+    
+    await deleteWaitlistEntry(id)
+    
+    // Remove from local state
+    setWaitlistEntries(prev => prev.filter(entry => entry.id !== id))
+    
+    toast({
+      title: "Entry removed",
+      description: "Waitlist entry has been successfully removed.",
+    })
+  } catch (error) {
+    toast({
+      title: "Error removing entry",
+      description: "Something went wrong while removing the entry.",
+      variant: "destructive"
+    })
+  }
+}
 
   const filteredEntries = waitlistEntries.filter(entry =>
     entry.phone_number.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
-    // Update the main component layout
     <div className="p-4 space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold">Waitlist</h2>
@@ -87,18 +102,13 @@ export default function AdminWaitlist() {
               <TableHead>ID</TableHead>
               <TableHead>Phone Number</TableHead>
               <TableHead className="text-right">Timestamp</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {filteredEntries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
-                  Loading waitlist entries...
-                </TableCell>
-              </TableRow>
-            ) : filteredEntries.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
+                <TableCell colSpan={4} className="h-24 text-center">
                   {search ? "No matching entries found" : "No waitlist entries found"}
                 </TableCell>
               </TableRow>
@@ -117,6 +127,16 @@ export default function AdminWaitlist() {
                       <Calendar className="mr-2 h-4 w-4" />
                       {formatDate(entry.created_at)}
                     </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRemoveEntry(entry.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

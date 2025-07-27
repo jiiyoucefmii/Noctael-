@@ -4,16 +4,19 @@ import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 export default function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading } = useAdminAuth()
-  const router = useRouter()
+  // Temporarily disabled authentication check
+  // const { isAuthenticated, loading } = useAdminAuth()
+  // const router = useRouter()
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.replace("/auth/login")
-    }
-  }, [isAuthenticated, loading, router])
+  // useEffect(() => {
+  //   if (!loading && !isAuthenticated) {
+  //     router.replace("/auth/login")
+  //   }
+  // }, [isAuthenticated, loading, router])
 
-  if (loading) return <div>Loading...</div>
-  if (!isAuthenticated) return null
+  // if (loading) return <div>Loading...</div>
+  // if (!isAuthenticated) return null
+  
+  // Temporarily allow direct access
   return <>{children}</>
 }

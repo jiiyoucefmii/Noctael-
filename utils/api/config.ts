@@ -1,1 +1,1 @@
-export const API_URL = 'https://noctael.shop/api';
+export const API_URL = 'https://noctael.onrender.com';
