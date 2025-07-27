@@ -1,8 +1,10 @@
 "use client"
-import { deleteWaitlistEntry } from "@/utils/api/waitlist"
-import { useState, useCallback } from "react"
+
+import { useEffect, useState, useCallback } from "react"
 import { Search, Phone, Calendar, Trash2 } from "lucide-react"
+
 import { useToast } from "@/hooks/use-toast"
+import { getWaitlistEntries, deleteWaitlistEntry, WaitlistEntry } from "@/utils/api/waitlist"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -15,65 +17,57 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-interface WaitlistEntry {
-  id: string;
-  phone_number: string;
-  created_at: string;
-}
-
 export default function AdminWaitlist() {
   const [search, setSearch] = useState("")
+  const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([])
+  const [loading, setLoading] = useState(true)
   const { toast } = useToast()
 
-  // Static dummy data
-  const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([
-    {
-      id: "1",
-      phone_number: "+213555123456",
-      created_at: new Date().toISOString()
-    },
-    {
-      id: "2",
-      phone_number: "+213555234567",
-      created_at: new Date(Date.now() - 86400000).toISOString() // 1 day ago
-    },
-    {
-      id: "3",
-      phone_number: "+213555345678",
-      created_at: new Date(Date.now() - 172800000).toISOString() // 2 days ago
+  const fetchEntries = useCallback(async () => {
+    try {
+      const entries = await getWaitlistEntries()
+      setWaitlistEntries(entries)
+    } catch (error) {
+      toast({
+        title: "Failed to load entries",
+        description: "Could not fetch waitlist data.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
-  ])
+  }, [toast])
+
+  useEffect(() => {
+    fetchEntries()
+  }, [fetchEntries])
 
   const formatDate = useCallback((dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     })
   }, [])
 
   const handleRemoveEntry = async (id: string) => {
-  try {
-    
-    await deleteWaitlistEntry(id)
-    
-    // Remove from local state
-    setWaitlistEntries(prev => prev.filter(entry => entry.id !== id))
-    
-    toast({
-      title: "Entry removed",
-      description: "Waitlist entry has been successfully removed.",
-    })
-  } catch (error) {
-    toast({
-      title: "Error removing entry",
-      description: "Something went wrong while removing the entry.",
-      variant: "destructive"
-    })
+    try {
+      await deleteWaitlistEntry(id)
+      setWaitlistEntries(prev => prev.filter(entry => entry.id !== id))
+      toast({
+        title: "Entry removed",
+        description: "Waitlist entry has been successfully removed.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error removing entry",
+        description: "Something went wrong while removing the entry.",
+        variant: "destructive",
+      })
+    }
   }
-}
 
   const filteredEntries = waitlistEntries.filter(entry =>
     entry.phone_number.toLowerCase().includes(search.toLowerCase())
@@ -94,7 +88,7 @@ export default function AdminWaitlist() {
           />
         </div>
       </div>
-    
+
       <div className="rounded-[5px] border-0 p-4 sm:p-6 bg-[#171717] overflow-x-auto">
         <Table>
           <TableHeader>
@@ -106,7 +100,13 @@ export default function AdminWaitlist() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredEntries.length === 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">
+                  Loading...
+                </TableCell>
+              </TableRow>
+            ) : filteredEntries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
                   {search ? "No matching entries found" : "No waitlist entries found"}

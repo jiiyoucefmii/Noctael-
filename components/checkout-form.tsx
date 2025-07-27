@@ -66,12 +66,24 @@ export default function CheckoutForm() {
     isLoading: isCartLoading,
   } = useCart()
 
+  // Function to parse and sort states numerically
+  const parseAndSortStates = (states: string[]): string[] => {
+    return states
+      .map(state => {
+        const match = state.match(/^(\d+)-/)
+        const num = match ? parseInt(match[1], 10) : 0
+        return { state, num }
+      })
+      .sort((a, b) => a.num - b.num)
+      .map(item => item.state)
+  }
+
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true)
       
       const shippingOptions = await getAllShippingOptions()
-      const states = [...new Set(shippingOptions.map(opt => opt.state))]
+      const states = parseAndSortStates([...new Set(shippingOptions.map(opt => opt.state))])
       setAvailableStates(states)
 
       const userData = await getCurrentUser()
@@ -218,7 +230,7 @@ export default function CheckoutForm() {
           address: formData.address,
           city: formData.state, // Using state as city
           state: formData.state,
-          country: "N/A", // Add default value
+          country: "Algeria",
           is_default: false,
         }
         const { address } = await createAddress(payload)
@@ -367,9 +379,17 @@ export default function CheckoutForm() {
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableStates.map(state => (
-                    <SelectItem key={state} value={state}>{state}</SelectItem>
-                  ))}
+                  {availableStates.map(state => {
+                    // Extract the number and name for display
+                    const parts = state.split('-')
+                    const num = parts[0]
+                    const name = parts.slice(1).join('-')
+                    return (
+                      <SelectItem key={state} value={state}>
+                        {num} - {name}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
