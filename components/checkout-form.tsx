@@ -378,7 +378,7 @@ export default function CheckoutForm() {
                 <SelectTrigger>
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#171717] border-gray-700">
                   {availableStates.map(state => {
                     // Extract the number and name for display
                     const parts = state.split('-')
@@ -402,7 +402,7 @@ export default function CheckoutForm() {
                 <SelectTrigger>
                   <SelectValue placeholder="Select shipping type" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#171717] border-gray-700">
                   <SelectItem value="to_home">To Home</SelectItem>
                   <SelectItem value="to_desk">To Desk</SelectItem>
                 </SelectContent>
