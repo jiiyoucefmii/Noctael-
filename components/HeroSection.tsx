@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Component as ShadowOverlay } from "./ui/Shadow";
-import Newsletter from "./newsletter";
+// import Newsletter from "./newsletter";
 
 // Demo component with the specified configuration
 const DemoOne = () => { 
@@ -51,9 +51,10 @@ export default function HeroSection() {
             Embrace the darkness with our premium clothing collection designed for the night dwellers.
           </p>
         </div>
-        <div className="max-w-md w-full">
+        {/* Waitlist section commented out */}
+        {/* <div className="max-w-md w-full">
           <Newsletter />
-        </div>
+        </div> */}
       </div>
     </section>
   );
