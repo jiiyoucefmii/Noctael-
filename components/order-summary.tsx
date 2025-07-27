@@ -18,7 +18,6 @@ export default function OrderSummary() {
     total
   } = useCart()
 
-  console.log(items)
 
   const [localLoading, setLocalLoading] = useState(true)
 

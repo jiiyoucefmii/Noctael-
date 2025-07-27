@@ -20,7 +20,6 @@ export default function OrderConfirmationPage() {
 
   useEffect(() => {
     if (!orderId) return
-    setOrder("order.shipping_state")
 
     const fetchOrder = async () => {
       try {
@@ -31,8 +30,6 @@ export default function OrderConfirmationPage() {
         if (order.shipping_state) {
           const shippingOptions = await getShippingOptionsByState(order.shipping_state)
           const option = shippingOptions.find(opt => opt.state === order.shipping_state)
-          console.log("option")
-          console.log(option)
           if (option) {
             setShippingOption(option)
           }

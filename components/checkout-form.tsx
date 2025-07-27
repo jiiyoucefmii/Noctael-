@@ -263,7 +263,7 @@ export default function CheckoutForm() {
       }
       
       toast({ title: "Order placed", description: `Order #${order.id} was created.` })
-      router.push(`/order-confirmation?orderId=${order.id}`)
+      router.push(`/order-confirmation/${order.id}`)
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to create order", variant: "destructive" })
     } finally {

@@ -1,14 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { verifyEmail } from '@/utils/api/users'
 import { toast } from '@/components/ui/use-toast'
 
-export default function VerifyEmailPage() {
+function VerifyEmailPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying')
 
   useEffect(() => {
@@ -46,5 +45,13 @@ export default function VerifyEmailPage() {
       {status === 'success' && <p>Email verified! Redirecting to login...</p>}
       {status === 'error' && <p>There was a problem verifying your email.</p>}
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <VerifyEmailPage />
+    </Suspense>
   )
 }

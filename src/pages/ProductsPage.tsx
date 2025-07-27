@@ -1,15 +1,16 @@
-"use client"
+'use client'
 
 import { Suspense } from "react"
-import { useSearchParams } from "react-router-dom"
+import { useSearchParams } from "next/navigation"
 
-import ProductList from "../../components/product-list"
-import ProductFilters from "../../components/product-filters"
+import dynamic from "next/dynamic"
 import ProductSkeleton from "../../components/product-skeleton"
 
+const ProductList = dynamic(() => import("../../components/product-list"), { ssr: false })
+const ProductFilters = dynamic(() => import("../../components/product-filters"), { ssr: false })
 
 export default function ProductsPage() {
-  const [searchParams] = useSearchParams()
+  const searchParams = useSearchParams()
 
   const searchParamsObj = Object.fromEntries(searchParams.entries())
 
@@ -31,3 +32,4 @@ export default function ProductsPage() {
     </div>
   )
 }
+

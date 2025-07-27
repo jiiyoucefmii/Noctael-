@@ -7,6 +7,9 @@ import ProductFilters from "@/components/product-filters"
 import ProductSkeleton from "@/components/product-skeleton"
 import { getProducts } from "@/utils/api/products"
 
+export const dynamic = 'force-dynamic'
+
+
 export const metadata: Metadata = {
   title: "Products | Noctael",
   description: "Browse our collection of premium clothing.",

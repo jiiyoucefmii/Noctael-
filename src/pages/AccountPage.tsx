@@ -1,5 +1,6 @@
+'use client'
+import { useRouter } from "next/navigation"
 import React from "react"
-import { useNavigate } from "react-router-dom"
 import { Button } from "../../components/ui/button"
 import { useAuth } from "../../hooks/useAuth"
 import { logoutUser } from "../../utils/api/users"
@@ -10,12 +11,12 @@ import AccountAddresses from "../../components/account/addresses"
 import AccountWishlist from "../../components/account/wishlist"
 
 export default function AccountPage() {
-  const navigate = useNavigate()
+  const router = useRouter()
   const { user } = useAuth()
 
   const handleLogout = async () => {
     await logoutUser()
-    navigate("/auth/login")
+    router.push("/auth/login")
   }
 
   return (

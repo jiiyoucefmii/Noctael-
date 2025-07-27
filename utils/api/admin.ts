@@ -1,4 +1,5 @@
 import axios from 'axios';
+
 import { API_URL } from './config';
 
 export interface AdminLoginCredentials {
@@ -29,7 +30,7 @@ export async function adminLogin(credentials: AdminLoginCredentials) {
     const response = await axiosInstance.post('/admin/login', credentials);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Admin login failed');
+    throw new Error(error.response?.data?.message || 'Login failed');
   }
 }
 

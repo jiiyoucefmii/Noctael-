@@ -1,29 +1,29 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { 
-  BarChart3, 
-  Box, 
-  Home, 
-  LayoutDashboard, 
-  LogOut, 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  Tag, 
+import {
+  BarChart3,
+  Box,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  ShoppingCart,
+  Users,
+  Tag,
   MapPin,
   PhoneCall,
   ChevronRight,
   ChevronLeft
 } from "lucide-react"
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Legend
 } from 'recharts'
@@ -37,10 +37,10 @@ import AdminPromotions from "@/components/admin/promotions"
 import AdminShippingOptions from "@/components/admin/shippingOptions"
 
 import { getAllOrders, Order } from "@/utils/api/orders"
-import { getUsersWithOrders, logoutUser } from "@/utils/api/users"
+import { getUsersWithOrders } from "@/utils/api/users"
 import { getProducts } from "@/utils/api/products"
+import { adminLogout } from "@/utils/api/admin"
 
-// Update the tabs array to include the waitlist tab
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "products", label: "Products", icon: Package },
@@ -75,9 +75,7 @@ export default function AdminDashboard() {
         getAllOrders(),
         getUsersWithOrders()
       ])
-      
       const salesData = processSalesData(ordersRes.orders)
-      
       setDashboardData({
         totalProducts: productsRes.length,
         totalOrders: ordersRes.count,
@@ -93,8 +91,8 @@ export default function AdminDashboard() {
   }
 
   const processSalesData = (orders: Order[]) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     const currentDate = new Date()
     const last6Months = Array.from({ length: 6 }, (_, i) => {
       const date = new Date(currentDate)
@@ -105,22 +103,17 @@ export default function AdminDashboard() {
         name: `${months[date.getMonth()]} ${date.getFullYear()}`
       }
     }).reverse()
-  
+
     return last6Months.map(({ month, year, name }) => {
       const monthOrders = orders.filter(o => {
         const d = new Date(o.created_at)
         return d.getMonth() === month && d.getFullYear() === year
       })
-      
-      const totalSales = monthOrders.reduce((sum, o) => {
-        const orderTotal = Number(o.total) || 0
-        return sum + orderTotal
-      }, 0)
-      
-      return { 
-        name, 
-        sales: totalSales, 
-        orders: monthOrders.length 
+      const totalSales = monthOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+      return {
+        name,
+        sales: totalSales,
+        orders: monthOrders.length
       }
     })
   }
@@ -131,18 +124,17 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
-      await logoutUser()
+      await adminLogout()
       window.location.href = "/auth/login"
     } catch (err) {
-      // Optionally handle error
+      console.error("Admin logout failed:", err)
     }
   }
 
   return (
     <div className="flex min-h-screen relative">
-      {/* Sidebar Toggle Button (visible when sidebar is hidden) */}
       {!sidebarVisible && (
-        <button 
+        <button
           onClick={toggleSidebar}
           className="fixed left-0 top-20 z-10 bg-[#171717] text-white p-2 rounded-r-md shadow-md"
           aria-label="Show sidebar"
@@ -151,18 +143,17 @@ export default function AdminDashboard() {
         </button>
       )}
 
-      {/* Sidebar */}
-      <div 
+      <div
         className={`w-64 border-0 bg-[#171717] text-white transition-all duration-300 ease-in-out ${
           sidebarVisible ? 'translate-x-0' : '-translate-x-full'
         } absolute h-full z-10`}
-      > 
+      >
         <div className="flex h-16 items-center border-b border-gray-800 px-6 justify-between">
           <Link href="/admin" className="flex items-center font-semibold text-white">
             <Box className="mr-2 h-6 w-6" /> Noctael Admin
           </Link>
-          <button 
-            onClick={toggleSidebar} 
+          <button
+            onClick={toggleSidebar}
             className="text-gray-400 hover:text-white"
             aria-label="Hide sidebar"
           >
@@ -175,7 +166,9 @@ export default function AdminDashboard() {
               <button
                 key={tab.id}
                 className={`flex w-full items-center rounded-md px-3 py-2 text-sm font-medium ${
-                  activeTab === tab.id ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  activeTab === tab.id
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
                 }`}
                 onClick={() => setActiveTab(tab.id)}
               >
@@ -185,7 +178,7 @@ export default function AdminDashboard() {
             ))}
           </nav>
         </div>
-        <div className="absolute bottom-4 left-4 right-4 space-y-2"> 
+        <div className="absolute bottom-4 left-4 right-4 space-y-2">
           <Button asChild variant="outline" className="w-full justify-start border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white">
             <Link href="/">
               <Home className="mr-2 h-4 w-4" />
@@ -202,7 +195,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className={`flex-1 p-6 transition-all duration-300 ease-in-out ${sidebarVisible ? '' : 'ml-0'}`}>
         {activeTab === "dashboard" && <AdminDashboardContent data={dashboardData} loading={loading} />}
         {activeTab === "products" && <AdminProducts />}
@@ -220,38 +212,20 @@ function AdminDashboardContent({ data, loading }: { data: typeof dashboardData, 
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
-      
+
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
         </div>
       ) : (
         <>
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <StatCard 
-              icon={<Package className="h-6 w-6 text-blue-600" />} 
-              title="Total Products" 
-              value={data.totalProducts} 
-              bgColor="bg-blue-100"
-            />
-            <StatCard 
-              icon={<ShoppingCart className="h-6 w-6 text-green-600" />} 
-              title="Total Orders" 
-              value={data.totalOrders} 
-              bgColor="bg-green-100"
-            />
-            <StatCard 
-              icon={<Users className="h-6 w-6 text-purple-600" />} 
-              title="Total Customers" 
-              value={data.totalCustomers} 
-              bgColor="bg-purple-100"
-            />
+            <StatCard icon={<Package className="h-6 w-6 text-blue-600" />} title="Total Products" value={data.totalProducts} bgColor="bg-blue-100" />
+            <StatCard icon={<ShoppingCart className="h-6 w-6 text-green-600" />} title="Total Orders" value={data.totalOrders} bgColor="bg-green-100" />
+            <StatCard icon={<Users className="h-6 w-6 text-purple-600" />} title="Total Customers" value={data.totalCustomers} bgColor="bg-purple-100" />
           </div>
 
-          {/* Charts and Recent Orders */}
           <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Sales Chart */}
             <div className="rounded-[5px] border-0 p-6 bg-[#171717]">
               <h2 className="mb-4 text-lg font-medium">Sales Overview</h2>
               <div className="h-64">
@@ -261,19 +235,9 @@ function AdminDashboardContent({ data, loading }: { data: typeof dashboardData, 
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
-                      <Tooltip 
-                        formatter={(value: number) => [`${value.toFixed(0)} Da`, 'Sales']}
-                        labelFormatter={(label) => `Month: ${label}`}
-                      />
+                      <Tooltip formatter={(value: number) => [`${value.toFixed(0)} Da`, 'Sales']} labelFormatter={(label) => `Month: ${label}`} />
                       <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="sales" 
-                        stroke="#3b82f6" 
-                        strokeWidth={2}
-                        activeDot={{ r: 8 }}
-                        name="Sales"
-                      />
+                      <Line type="monotone" dataKey="sales" stroke="#3b82f6" strokeWidth={2} activeDot={{ r: 8 }} name="Sales" />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
@@ -285,14 +249,11 @@ function AdminDashboardContent({ data, loading }: { data: typeof dashboardData, 
               </div>
             </div>
 
-            {/* Recent Orders */}
             <div className="rounded-[5px] border-0 p-6 bg-[#171717]">
               <h2 className="mb-4 text-lg font-medium">Recent Orders</h2>
               <div className="space-y-4">
                 {data.recentOrders.length > 0 ? (
-                  data.recentOrders.map((order) => (
-                    <OrderCard key={order.id} order={order} />
-                  ))
+                  data.recentOrders.map((order) => <OrderCard key={order.id} order={order} />)
                 ) : (
                   <div className="h-full flex items-center justify-center bg-gray-50 rounded-lg p-4">
                     <p className="text-gray-500">No recent orders</p>
@@ -307,11 +268,11 @@ function AdminDashboardContent({ data, loading }: { data: typeof dashboardData, 
   )
 }
 
-function StatCard({ icon, title, value, bgColor }: { 
-  icon: React.ReactNode, 
-  title: string, 
-  value: number, 
-  bgColor: string 
+function StatCard({ icon, title, value, bgColor }: {
+  icon: React.ReactNode,
+  title: string,
+  value: number,
+  bgColor: string
 }) {
   return (
     <div className="rounded-[5px] border-0 p-4 md:p-6 bg-[#171717]">
@@ -340,13 +301,14 @@ function OrderCard({ order }: { order: Order }) {
       <div className="text-right">
         <p className="text-sm md:text-base font-medium">{Number(order.total).toFixed(0)} Da</p>
         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-            order.status === 'accepted' 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-yellow-100 text-yellow-800'
-          }`}>
+          order.status === 'accepted' 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-yellow-100 text-yellow-800'
+        }`}>
           {order.status}
         </span>
       </div>
     </div>
   )
 }
+

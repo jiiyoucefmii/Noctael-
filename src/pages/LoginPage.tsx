@@ -1,6 +1,17 @@
-import { Link } from "react-router-dom"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card"
-import LoginForm from "../../components/login-form"
+'use client'
+
+import dynamic from "next/dynamic"
+import Link from "next/link"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "../../components/ui/card"
+
+const LoginForm = dynamic(() => import('../../components/login-form'), { ssr: false })
 
 export default function LoginPage() {
   return (
@@ -9,7 +20,9 @@ export default function LoginPage() {
         <Card>
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl">Login</CardTitle>
-            <CardDescription>Enter your email and password to access your account</CardDescription>
+            <CardDescription>
+              Enter your email and password to access your account
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <LoginForm />
@@ -17,12 +30,12 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-center text-sm">
               <span className="text-gray-500">Don't have an account?</span>{" "}
-              <Link to="/auth/register" className="font-medium text-black hover:underline">
+              <Link href="/auth/register" className="font-medium text-black hover:underline">
                 Sign up
               </Link>
             </div>
             <div className="text-center text-sm">
-              <Link to="/auth/forgot-password" className="font-medium text-black hover:underline">
+              <Link href="/auth/forgot-password" className="font-medium text-black hover:underline">
                 Forgot your password?
               </Link>
             </div>
